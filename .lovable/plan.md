@@ -1,105 +1,68 @@
 
 
-# Phase 2 + 3: Checkout, Delivery, Payments & Farmer Dashboard
+# Phase 2 + 3 Implementation (Skipping Payment Secrets)
 
-## Phase 2: Checkout with Delivery Calculator and Payments
+## What We're Building
 
-### 2A. Checkout Page (`src/pages/Checkout.tsx`)
-- Fetch cart items with product details (including farmer suburb from profiles)
-- **Delivery address section**: Suburb dropdown (from `HELDERBERG_SUBURBS`) + optional manual address text field
-- **Distance calculation**: Use `SUBURB_COORDS` from `constants.ts` to compute straight-line distance between customer's selected suburb and each farmer's suburb. Apply fee tiers: 0-5km = R35, 5-15km = R50, >15km = "Unavailable"
-- **Order summary**: Product subtotal, delivery fee breakdown per farmer, grand total
-- **Payment method selector**: Choose between PayFast or Yoco
-- On "Pay Now", create order(s) in the database grouped by farmer, then redirect to payment gateway
+### Phase 2: Checkout with Delivery Calculator
+- Full checkout page with delivery suburb selection and address input
+- Haversine distance calculator to determine delivery fees per farmer
+- Order summary with subtotal, per-farmer delivery fees, and grand total
+- Payment method selector (PayFast / Yoco) -- UI only, with a "Coming Soon" state since keys aren't configured yet
+- Order creation in database on "Place Order" (without live payment redirect for now)
+- Cart clearing after successful order placement
 
-### 2B. Payment Edge Functions
-- **`supabase/functions/payfast-payment/index.ts`**: Creates a PayFast payment form redirect with order details, amount, return/cancel/notify URLs
-- **`supabase/functions/yoco-payment/index.ts`**: Creates a Yoco checkout session via their API and returns the redirect URL
-- **`supabase/functions/payment-webhook/index.ts`**: Receives payment confirmations from either gateway, validates signature, updates order status to "confirmed", clears cart items
-- Secrets needed: `PAYFAST_MERCHANT_ID`, `PAYFAST_MERCHANT_KEY`, `PAYFAST_PASSPHRASE`, `YOCO_SECRET_KEY`
-
-### 2C. Database Changes
-- Add `payment_method` column to `orders` table (text, nullable)
-- Add `payment_reference` column to `orders` table (text, nullable)
-- Add unique constraint on `cart_items(user_id, product_id)` to support upsert in addToCart
-
-### 2D. Cart Page Update
-- Update Cart page to show delivery suburb selector inline if profile suburb not set
-- Pass delivery info to checkout
-
----
-
-## Phase 3: Farmer Dashboard
-
-### 3A. Product Management (`src/pages/FarmerDashboard.tsx`)
-Full rewrite with tabbed layout:
-- **Products tab**: List farmer's own products (active + inactive) with edit/delete. "Add Product" button opens a form
-- **Orders tab**: Incoming orders with customer details, items, and status toggle
-
-### 3B. Product Upload Form (`src/components/farmer/ProductForm.tsx`)
-- Fields: Name, Description, Price (ZAR), Category (dropdown from `PRODUCT_CATEGORIES`), Stock Quantity, Weight (kg), Photo upload
-- Photo uploads to `product-images` storage bucket
-- Creates/updates product in `products` table with `farmer_id` set to current user
-
-### 3C. Order Management (`src/components/farmer/OrderList.tsx`)
-- Fetches orders where `farmer_id = current user`
-- Shows customer name (from profiles join), delivery suburb, items with quantities
-- Status toggle buttons: Placed -> Harvested -> Ready for Pickup
-- Updates `orders.status` via Supabase client
-
-### 3D. Supporting Components
-- `src/components/farmer/ProductList.tsx` - grid of farmer's products with edit/delete actions
-- `src/components/farmer/OrderCard.tsx` - individual order card with status controls
+### Phase 3: Farmer Dashboard
+- Tabbed layout: **Products** | **Orders**
+- Product upload form with image upload to storage, all fields (name, description, price, category, stock, weight)
+- Product list with edit and delete functionality
+- Incoming orders list with customer details
+- Status toggle: Placed -> Harvested -> Ready for Pickup
 
 ---
 
 ## Technical Details
 
-### New files to create:
-1. `supabase/functions/payfast-payment/index.ts`
-2. `supabase/functions/yoco-payment/index.ts`
-3. `supabase/functions/payment-webhook/index.ts`
-4. `src/components/farmer/ProductForm.tsx`
-5. `src/components/farmer/ProductList.tsx`
-6. `src/components/farmer/OrderList.tsx`
-7. `src/components/farmer/OrderCard.tsx`
-8. `src/components/checkout/DeliveryCalculator.tsx`
-9. `src/components/checkout/OrderSummary.tsx`
-10. `src/components/checkout/PaymentSelector.tsx`
-11. `src/lib/delivery.ts` - distance calculation helper
+### New Files
 
-### Files to modify:
-1. `src/pages/Checkout.tsx` - full rebuild
-2. `src/pages/FarmerDashboard.tsx` - full rebuild
-3. `supabase/config.toml` - add edge function configs with `verify_jwt = false`
+1. **`src/lib/delivery.ts`** -- Haversine distance function + fee calculator. Takes customer suburb and farmer suburb, returns distance in km and applicable fee (R35 / R50 / unavailable).
 
-### Database migration:
-```sql
-ALTER TABLE orders ADD COLUMN payment_method text;
-ALTER TABLE orders ADD COLUMN payment_reference text;
-ALTER TABLE cart_items ADD CONSTRAINT cart_items_user_product_unique UNIQUE (user_id, product_id);
-```
+2. **`src/components/checkout/DeliveryCalculator.tsx`** -- Suburb dropdown + address input. Displays per-farmer delivery fees. Shows "Delivery unavailable" if >15km.
 
-### Secrets required (will prompt before proceeding):
-- `PAYFAST_MERCHANT_ID` - from PayFast merchant dashboard
-- `PAYFAST_MERCHANT_KEY` - from PayFast merchant dashboard
-- `PAYFAST_PASSPHRASE` - from PayFast settings
-- `YOCO_SECRET_KEY` - from Yoco developer portal
+3. **`src/components/checkout/OrderSummary.tsx`** -- Itemized breakdown: products grouped by farmer, subtotals, delivery fees, grand total.
 
-### Delivery calculation logic (`src/lib/delivery.ts`):
-- Haversine formula to compute distance between two suburb coordinates
-- Returns fee tier based on distance thresholds from `DELIVERY_FEES` constant
-- Groups cart items by farmer and calculates per-farmer delivery fee
+4. **`src/components/checkout/PaymentSelector.tsx`** -- Radio buttons for PayFast / Yoco. Both show as selectable but payment redirect is deferred (order placed with status "placed", payment marked as "pending").
 
-### Order creation flow:
-1. Customer selects delivery suburb + enters address
-2. System calculates delivery fees per farmer
-3. Customer selects payment method (PayFast or Yoco)
-4. On "Pay Now": creates order records per farmer with status "placed"
-5. Redirects to payment gateway
-6. Webhook confirms payment, updates status to "confirmed"
-7. Cart items cleared
+5. **`src/components/farmer/ProductForm.tsx`** -- Dialog/sheet form for creating and editing products. Image upload to `product-images` bucket. Fields: name, description, price, category (dropdown), stock quantity, weight (kg).
 
-### Farmer order status flow:
-Placed -> Harvested -> Ready for Pickup (farmer toggles each step)
+6. **`src/components/farmer/ProductList.tsx`** -- Grid of farmer's own products. Edit button opens ProductForm pre-filled. Delete button with confirmation. Toggle active/inactive.
 
+7. **`src/components/farmer/OrderCard.tsx`** -- Single order card showing customer name, suburb, items, total, and status badge with "Next Status" button.
+
+8. **`src/components/farmer/OrderList.tsx`** -- Fetches and displays all orders for the current farmer. Groups by status.
+
+### Modified Files
+
+1. **`src/pages/Checkout.tsx`** -- Full rebuild. Fetches cart items with product + farmer profile data. Composes DeliveryCalculator, OrderSummary, and PaymentSelector. Creates orders grouped by farmer on submit.
+
+2. **`src/pages/FarmerDashboard.tsx`** -- Full rebuild with Tabs component. Products tab shows ProductList + "Add Product" button. Orders tab shows OrderList.
+
+### Order Creation Flow (without live payment)
+1. Customer selects delivery suburb and enters address
+2. System calculates per-farmer delivery fees using Haversine formula
+3. Customer selects payment method (recorded but not charged)
+4. "Place Order" creates one order per farmer in the `orders` table with status "placed"
+5. Order items inserted into `order_items` table
+6. Cart items deleted
+7. User redirected to a confirmation message
+
+### Farmer Status Flow
+- Each order card shows current status and a button to advance:
+  - "placed" -> button: "Mark Harvested"
+  - "harvested" -> button: "Mark Ready for Pickup"
+  - "ready" -> no further action (awaiting delivery/collection)
+
+### Storage Integration
+- Product images uploaded to `product-images` bucket
+- Public URLs generated for display
+- Old image deleted on replacement during edit
