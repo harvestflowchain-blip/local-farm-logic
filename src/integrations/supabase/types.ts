@@ -129,6 +129,8 @@ export type Database = {
           delivery_suburb: string | null
           farmer_id: string
           id: string
+          payment_method: string | null
+          payment_reference: string | null
           status: string
           total: number
           updated_at: string
@@ -141,6 +143,8 @@ export type Database = {
           delivery_suburb?: string | null
           farmer_id: string
           id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
           status?: string
           total?: number
           updated_at?: string
@@ -153,6 +157,8 @@ export type Database = {
           delivery_suburb?: string | null
           farmer_id?: string
           id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
           status?: string
           total?: number
           updated_at?: string
