@@ -1,112 +1,105 @@
 
 
-# HarvestFlow Chain — Full Implementation Plan
+# Phase 2 + 3: Checkout, Delivery, Payments & Farmer Dashboard
 
-## Overview
-A mobile-first marketplace connecting Helderberg-area farmers directly with customers. Fine Art Minimalist aesthetic (white backgrounds, black typography, gallery-style masonry grid). Built with Lovable Cloud (Supabase) for auth, database, storage, edge functions, and AI.
+## Phase 2: Checkout with Delivery Calculator and Payments
 
----
+### 2A. Checkout Page (`src/pages/Checkout.tsx`)
+- Fetch cart items with product details (including farmer suburb from profiles)
+- **Delivery address section**: Suburb dropdown (from `HELDERBERG_SUBURBS`) + optional manual address text field
+- **Distance calculation**: Use `SUBURB_COORDS` from `constants.ts` to compute straight-line distance between customer's selected suburb and each farmer's suburb. Apply fee tiers: 0-5km = R35, 5-15km = R50, >15km = "Unavailable"
+- **Order summary**: Product subtotal, delivery fee breakdown per farmer, grand total
+- **Payment method selector**: Choose between PayFast or Yoco
+- On "Pay Now", create order(s) in the database grouped by farmer, then redirect to payment gateway
 
-## Phase 1: Foundation & Aesthetic
+### 2B. Payment Edge Functions
+- **`supabase/functions/payfast-payment/index.ts`**: Creates a PayFast payment form redirect with order details, amount, return/cancel/notify URLs
+- **`supabase/functions/yoco-payment/index.ts`**: Creates a Yoco checkout session via their API and returns the redirect URL
+- **`supabase/functions/payment-webhook/index.ts`**: Receives payment confirmations from either gateway, validates signature, updates order status to "confirmed", clears cart items
+- Secrets needed: `PAYFAST_MERCHANT_ID`, `PAYFAST_MERCHANT_KEY`, `PAYFAST_PASSPHRASE`, `YOCO_SECRET_KEY`
 
-### Authentication & Roles
-- Sign up / Sign in with email (Farmer or Customer role selection)
-- Profiles table with name, location fields, phone number
-- Roles table (farmer/customer) with RLS policies
-- Location captured via suburb dropdown (Helderberg areas: Somerset West, Strand, Gordon's Bay, etc.) + optional manual address
+### 2C. Database Changes
+- Add `payment_method` column to `orders` table (text, nullable)
+- Add `payment_reference` column to `orders` table (text, nullable)
+- Add unique constraint on `cart_items(user_id, product_id)` to support upsert in addToCart
 
-### Product Database & Home Page
-- Products table: name, description, price (ZAR), stock quantity, image URL, farmer ID, category
-- Supabase Storage bucket for product images
-- **Home page**: Masonry grid layout displaying products like an art gallery — edge-to-edge cards, clean white space, high-contrast black/white buttons
-- Product detail page with farmer info
-
-### Interaction Logging (AI Foundation)
-- Log anonymous user interactions (product views, cart adds) to an `interactions` table
-- This data feeds recommendations in later phases
-
-### App Shell & Navigation
-- Scaffold all routes: Home, Cart, Checkout, Farmer Dashboard, Admin Dashboard, Analytics
-- Bottom navigation bar (mobile-first)
-- Role-based route protection
+### 2D. Cart Page Update
+- Update Cart page to show delivery suburb selector inline if profile suburb not set
+- Pass delivery info to checkout
 
 ---
 
-## Phase 2: Cart, Checkout & Delivery
+## Phase 3: Farmer Dashboard
 
-### Shopping Cart
-- Add/remove products, quantity selection
-- Persistent cart (database-backed for logged-in users)
+### 3A. Product Management (`src/pages/FarmerDashboard.tsx`)
+Full rewrite with tabbed layout:
+- **Products tab**: List farmer's own products (active + inactive) with edit/delete. "Add Product" button opens a form
+- **Orders tab**: Incoming orders with customer details, items, and status toggle
 
-### Distance-Based Delivery Calculator
-- Pre-defined Helderberg suburb coordinates lookup
-- Fee tiers: 0–5km = R35, 5–15km = R50, >15km = "Unavailable"
-- Checkout summary: Product Total + Delivery Fee = Grand Total
+### 3B. Product Upload Form (`src/components/farmer/ProductForm.tsx`)
+- Fields: Name, Description, Price (ZAR), Category (dropdown from `PRODUCT_CATEGORIES`), Stock Quantity, Weight (kg), Photo upload
+- Photo uploads to `product-images` storage bucket
+- Creates/updates product in `products` table with `farmer_id` set to current user
 
-### Payment Integration
-- PayFast and Yoco integration via edge functions
-- Order creation on successful payment
-- Order status tracking (Placed → Confirmed → Ready → Delivered)
+### 3C. Order Management (`src/components/farmer/OrderList.tsx`)
+- Fetches orders where `farmer_id = current user`
+- Shows customer name (from profiles join), delivery suburb, items with quantities
+- Status toggle buttons: Placed -> Harvested -> Ready for Pickup
+- Updates `orders.status` via Supabase client
 
-### AI Enhancement: Smart Delivery Insights
-- Edge function analyzes completed orders to surface delivery zone stats
-- Dashboard widget showing delivery fee distribution and zone suggestions
-
----
-
-## Phase 3: Farmer Portal
-
-### Farmer Dashboard (Farmer-only)
-- Product upload form with photo upload, price, description, category
-- My Products list with edit/delete
-- Incoming orders list with customer name, address, items
-- Status toggle: Pending → Harvested → Ready for Pickup
-
-### AI: Stock & Upload Intelligence
-- Edge function using Lovable AI to predict low-stock alerts based on order velocity
-- Track form abandonment; surface AI suggestions (e.g., "simplify your description") in dashboard notification panel
-- Farmers can approve/dismiss suggestions
+### 3D. Supporting Components
+- `src/components/farmer/ProductList.tsx` - grid of farmer's products with edit/delete actions
+- `src/components/farmer/OrderCard.tsx` - individual order card with status controls
 
 ---
 
-## Phase 4: Logistics & Receipts
+## Technical Details
 
-### Courier Booking
-- Admin view of paid orders needing delivery
-- "Book Courier" button deep-links to Uber app / Google Maps with pre-filled pickup (farmer) and dropoff (customer) coordinates
-- Order status updates
+### New files to create:
+1. `supabase/functions/payfast-payment/index.ts`
+2. `supabase/functions/yoco-payment/index.ts`
+3. `supabase/functions/payment-webhook/index.ts`
+4. `src/components/farmer/ProductForm.tsx`
+5. `src/components/farmer/ProductList.tsx`
+6. `src/components/farmer/OrderList.tsx`
+7. `src/components/farmer/OrderCard.tsx`
+8. `src/components/checkout/DeliveryCalculator.tsx`
+9. `src/components/checkout/OrderSummary.tsx`
+10. `src/components/checkout/PaymentSelector.tsx`
+11. `src/lib/delivery.ts` - distance calculation helper
 
-### PDF Receipts
-- Auto-generate printable PDF receipt for each completed order
-- Include items, quantities, prices, delivery fee, total, farmer & customer details
+### Files to modify:
+1. `src/pages/Checkout.tsx` - full rebuild
+2. `src/pages/FarmerDashboard.tsx` - full rebuild
+3. `supabase/config.toml` - add edge function configs with `verify_jwt = false`
 
-### AI: Route Optimization Suggestions
-- Analyze logistics data via Lovable AI to suggest batching nearby deliveries
-- Surface fee reduction suggestions for efficient routes in admin dashboard
+### Database migration:
+```sql
+ALTER TABLE orders ADD COLUMN payment_method text;
+ALTER TABLE orders ADD COLUMN payment_reference text;
+ALTER TABLE cart_items ADD CONSTRAINT cart_items_user_product_unique UNIQUE (user_id, product_id);
+```
 
----
+### Secrets required (will prompt before proceeding):
+- `PAYFAST_MERCHANT_ID` - from PayFast merchant dashboard
+- `PAYFAST_MERCHANT_KEY` - from PayFast merchant dashboard
+- `PAYFAST_PASSPHRASE` - from PayFast settings
+- `YOCO_SECRET_KEY` - from Yoco developer portal
 
-## Phase 5: Analytics & AI Autonomy
+### Delivery calculation logic (`src/lib/delivery.ts`):
+- Haversine formula to compute distance between two suburb coordinates
+- Returns fee tier based on distance thresholds from `DELIVERY_FEES` constant
+- Groups cart items by farmer and calculates per-farmer delivery fee
 
-### Admin Analytics Dashboard
-- Total kilograms moved (parsed from product descriptions/weights)
-- Farmer payouts vs. platform revenue chart (using Recharts)
-- Map view with pins for farmers and customers in Helderberg area
-- Order volume trends over time
+### Order creation flow:
+1. Customer selects delivery suburb + enters address
+2. System calculates delivery fees per farmer
+3. Customer selects payment method (PayFast or Yoco)
+4. On "Pay Now": creates order records per farmer with status "placed"
+5. Redirects to payment gateway
+6. Webhook confirms payment, updates status to "confirmed"
+7. Cart items cleared
 
-### AI: Trend Prediction & Recommendations
-- Lovable AI-powered edge function analyzes all platform data to:
-  - Generate trending product recommendations on the home page
-  - Predict seasonal demand trends
-  - Suggest platform improvements (displayed as actionable cards in admin dashboard)
-- AI-generated weekly summary reports
-
----
-
-## Design System
-- **Background**: Pure white (#FFFFFF)
-- **Typography**: Black sans-serif, clean hierarchy
-- **Cards**: Edge-to-edge masonry grid, minimal borders, subtle shadows
-- **Buttons**: High-contrast black/white with sharp corners
-- **Mobile-first**: All layouts optimized for phone screens, responsive to desktop
+### Farmer order status flow:
+Placed -> Harvested -> Ready for Pickup (farmer toggles each step)
 
