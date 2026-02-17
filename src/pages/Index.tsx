@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import ProductCard from '@/components/ProductCard';
+import RecommendedProducts from '@/components/RecommendedProducts';
 import type { Tables } from '@/integrations/supabase/types';
 import { Loader2 } from 'lucide-react';
 
@@ -30,6 +31,9 @@ const Index = () => {
           <span className="text-xs text-muted-foreground uppercase tracking-widest">Helderberg</span>
         </div>
       </header>
+
+      {/* AI Recommendations */}
+      <RecommendedProducts />
 
       {/* Content */}
       <main className="px-2 pt-4">
