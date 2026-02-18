@@ -1,21 +1,266 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Users, Megaphone, BarChart3, Shield, Trash2, ArrowLeft } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+
+interface UserRow {
+  user_id: string;
+  full_name: string;
+  suburb: string | null;
+  created_at: string;
+  role: string;
+}
+
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  target_role: string;
+  is_active: boolean;
+  created_at: string;
+}
 
 const AdminDashboard = () => {
-  const { role } = useAuth();
+  const { role, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  if (role !== 'admin') { navigate('/'); return null; }
+  // Users
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+
+  // Announcements
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [announcementsLoading, setAnnouncementsLoading] = useState(true);
+  const [newTitle, setNewTitle] = useState('');
+  const [newContent, setNewContent] = useState('');
+  const [newTarget, setNewTarget] = useState('all');
+  const [publishing, setPublishing] = useState(false);
+
+  // Stats
+  const [stats, setStats] = useState({ users: 0, farmers: 0, customers: 0, products: 0, orders: 0 });
+
+  useEffect(() => {
+    if (!authLoading && role !== 'admin') navigate('/');
+  }, [role, authLoading]);
+
+  useEffect(() => {
+    if (role !== 'admin') return;
+    fetchUsers();
+    fetchAnnouncements();
+    fetchStats();
+  }, [role]);
+
+  const fetchUsers = async () => {
+    setUsersLoading(true);
+    const { data: roles } = await supabase.from('user_roles').select('user_id, role');
+    const { data: profiles } = await supabase.from('profiles').select('user_id, full_name, suburb, created_at');
+
+    if (roles && profiles) {
+      const profileMap: Record<string, any> = {};
+      profiles.forEach((p) => { profileMap[p.user_id] = p; });
+
+      const merged: UserRow[] = roles.map((r) => ({
+        user_id: r.user_id,
+        role: r.role,
+        full_name: profileMap[r.user_id]?.full_name || '—',
+        suburb: profileMap[r.user_id]?.suburb || null,
+        created_at: profileMap[r.user_id]?.created_at || '',
+      }));
+      setUsers(merged);
+    }
+    setUsersLoading(false);
+  };
+
+  const fetchAnnouncements = async () => {
+    setAnnouncementsLoading(true);
+    const { data } = await supabase
+      .from('announcements')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setAnnouncements((data as Announcement[]) || []);
+    setAnnouncementsLoading(false);
+  };
+
+  const fetchStats = async () => {
+    const [{ count: userCount }, { count: productCount }, { count: orderCount }] = await Promise.all([
+      supabase.from('profiles').select('*', { count: 'exact', head: true }),
+      supabase.from('products').select('*', { count: 'exact', head: true }),
+      supabase.from('orders').select('*', { count: 'exact', head: true }),
+    ]);
+
+    const { data: roleCounts } = await supabase.from('user_roles').select('role');
+    const farmers = roleCounts?.filter((r) => r.role === 'farmer').length || 0;
+    const customers = roleCounts?.filter((r) => r.role === 'customer').length || 0;
+
+    setStats({
+      users: userCount || 0,
+      farmers,
+      customers,
+      products: productCount || 0,
+      orders: orderCount || 0,
+    });
+  };
+
+  const publishAnnouncement = async () => {
+    if (!newTitle || !newContent || !user) return;
+    setPublishing(true);
+    const { error } = await supabase.from('announcements').insert({
+      title: newTitle,
+      content: newContent,
+      target_role: newTarget,
+      created_by: user.id,
+    });
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Announcement published' });
+      setNewTitle('');
+      setNewContent('');
+      fetchAnnouncements();
+    }
+    setPublishing(false);
+  };
+
+  const deleteAnnouncement = async (id: string) => {
+    await supabase.from('announcements').delete().eq('id', id);
+    fetchAnnouncements();
+  };
+
+  const toggleAnnouncement = async (id: string, active: boolean) => {
+    await supabase.from('announcements').update({ is_active: !active }).eq('id', id);
+    fetchAnnouncements();
+  };
+
+  if (authLoading || role !== 'admin') return null;
 
   return (
     <div className="min-h-screen pb-20">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
-        <div className="px-4 py-4">
-          <h1 className="text-xl font-bold tracking-tight">Admin</h1>
+        <div className="flex items-center gap-3 px-4 py-4">
+          <button onClick={() => navigate('/')}><ArrowLeft className="h-5 w-5" /></button>
+          <h1 className="text-xl font-bold tracking-tight">Admin Console</h1>
+          <Badge variant="outline" className="ml-auto text-xs"><Shield className="h-3 w-3 mr-1" />Admin</Badge>
         </div>
       </header>
-      <main className="px-4 pt-8 text-center text-muted-foreground">
-        <p>Analytics & logistics — coming in Phase 4-5</p>
+
+      <main className="px-4 pt-4">
+        <Tabs defaultValue="monitoring">
+          <TabsList className="w-full">
+            <TabsTrigger value="monitoring" className="flex-1 text-xs"><BarChart3 className="h-3.5 w-3.5 mr-1" />Stats</TabsTrigger>
+            <TabsTrigger value="users" className="flex-1 text-xs"><Users className="h-3.5 w-3.5 mr-1" />Users</TabsTrigger>
+            <TabsTrigger value="announcements" className="flex-1 text-xs"><Megaphone className="h-3.5 w-3.5 mr-1" />Broadcast</TabsTrigger>
+          </TabsList>
+
+          {/* Monitoring */}
+          <TabsContent value="monitoring" className="pt-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'Total Users', value: stats.users },
+                { label: 'Farmers', value: stats.farmers },
+                { label: 'Customers', value: stats.customers },
+                { label: 'Products', value: stats.products },
+                { label: 'Orders', value: stats.orders },
+              ].map((s) => (
+                <Card key={s.label} className="p-4 space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase tracking-widest">{s.label}</p>
+                  <p className="text-2xl font-bold">{s.value}</p>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Users */}
+          <TabsContent value="users" className="pt-4 space-y-3">
+            {usersLoading ? (
+              <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+            ) : users.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-10">No users found.</p>
+            ) : (
+              users.map((u) => (
+                <Card key={u.user_id} className="p-3 flex items-center justify-between">
+                  <div className="space-y-0.5 min-w-0">
+                    <p className="text-sm font-medium truncate">{u.full_name}</p>
+                    <p className="text-xs text-muted-foreground">{u.suburb || 'No location'}</p>
+                  </div>
+                  <Badge variant="outline" className="capitalize text-xs shrink-0">{u.role}</Badge>
+                </Card>
+              ))
+            )}
+          </TabsContent>
+
+          {/* Announcements / Signal Broadcaster */}
+          <TabsContent value="announcements" className="pt-4 space-y-6">
+            <Card className="p-4 space-y-3">
+              <h3 className="text-sm font-semibold">New Broadcast</h3>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Title</Label>
+                <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Announcement title" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Message</Label>
+                <Textarea value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="Write your announcement..." rows={3} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Target Audience</Label>
+                <Select value={newTarget} onValueChange={setNewTarget}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Users</SelectItem>
+                    <SelectItem value="customer">Consumers Only</SelectItem>
+                    <SelectItem value="farmer">Farmers Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={publishAnnouncement} disabled={publishing || !newTitle || !newContent} className="w-full">
+                {publishing && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Publish Announcement
+              </Button>
+            </Card>
+
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold">Past Broadcasts</h3>
+              {announcementsLoading ? (
+                <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+              ) : announcements.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">No announcements yet.</p>
+              ) : (
+                announcements.map((a) => (
+                  <Card key={a.id} className="p-3 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-0.5 min-w-0">
+                        <p className="text-sm font-medium">{a.title}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{a.content}</p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Badge variant={a.is_active ? 'default' : 'secondary'} className="text-xs cursor-pointer" onClick={() => toggleAnnouncement(a.id, a.is_active)}>
+                          {a.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                        <button onClick={() => deleteAnnouncement(a.id)} className="p-1 text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 text-xs text-muted-foreground">
+                      <span className="capitalize">{a.target_role}</span>
+                      <span>•</span>
+                      <span>{new Date(a.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
