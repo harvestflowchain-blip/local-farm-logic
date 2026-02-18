@@ -1,4 +1,4 @@
-import { Home, ShoppingCart, User, BarChart3, Sprout } from 'lucide-react';
+import { Home, ShoppingCart, User, BarChart3, Sprout, Package } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,7 @@ const BottomNav = () => {
 
   const navItems = [
     { to: '/', icon: Home, label: 'Home' },
+    ...(role === 'customer' ? [{ to: '/orders', icon: Package, label: 'Orders', auth: true }] : []),
     { to: '/cart', icon: ShoppingCart, label: 'Cart', auth: true },
     ...(role === 'farmer' ? [{ to: '/dashboard', icon: Sprout, label: 'Farm', auth: true }] : []),
     ...(role === 'admin' ? [{ to: '/admin', icon: BarChart3, label: 'Admin', auth: true }] : []),
