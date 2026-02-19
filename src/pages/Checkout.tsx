@@ -9,6 +9,8 @@ import { calculateDeliveryFee } from '@/lib/delivery';
 import DeliveryCalculator from '@/components/checkout/DeliveryCalculator';
 import OrderSummary, { type FarmerGroup } from '@/components/checkout/OrderSummary';
 import PaymentSelector from '@/components/checkout/PaymentSelector';
+import LogisticsSelector from '@/components/checkout/LogisticsSelector';
+import AIFeeSuggestion from '@/components/checkout/AIFeeSuggestion';
 import type { Tables } from '@/integrations/supabase/types';
 
 type CartItemWithProduct = Tables<'cart_items'> & { products: Tables<'products'> };
@@ -26,6 +28,7 @@ const Checkout = () => {
   const [suburb, setSuburb] = useState(profile?.suburb || '');
   const [address, setAddress] = useState(profile?.address || '');
   const [paymentMethod, setPaymentMethod] = useState('payfast');
+  const [logisticsProvider, setLogisticsProvider] = useState('standard');
 
   useEffect(() => {
     if (!user) { navigate('/auth'); return; }
@@ -37,7 +40,6 @@ const Checkout = () => {
       const cartItems = (cartData as CartItemWithProduct[]) || [];
       setItems(cartItems);
 
-      // Fetch farmer profiles for delivery calc
       const farmerIds = [...new Set(cartItems.map((i) => i.products.farmer_id))];
       if (farmerIds.length > 0) {
         const { data: profiles } = await supabase
@@ -58,18 +60,13 @@ const Checkout = () => {
     if (profile?.address && !address) setAddress(profile.address);
   }, [profile]);
 
-  // Build farmer groups
   const farmerGroups: FarmerGroup[] = (() => {
     const grouped: Record<string, { items: CartItemWithProduct[]; farmerSuburb: string; farmerName: string }> = {};
     items.forEach((item) => {
       const fid = item.products.farmer_id;
       if (!grouped[fid]) {
         const fp = farmerProfiles[fid];
-        grouped[fid] = {
-          items: [],
-          farmerSuburb: fp?.suburb || '',
-          farmerName: fp?.full_name || 'Farmer',
-        };
+        grouped[fid] = { items: [], farmerSuburb: fp?.suburb || '', farmerName: fp?.full_name || 'Farmer' };
       }
       grouped[fid].items.push(item);
     });
@@ -78,17 +75,18 @@ const Checkout = () => {
       const subtotal = g.items.reduce((s, i) => s + Number(i.products.price) * i.quantity, 0);
       const delivery = suburb ? calculateDeliveryFee(suburb, g.farmerSuburb) : { distanceKm: 0, fee: null, label: 'Select suburb' };
       return {
-        farmerId,
-        farmerName: g.farmerName,
+        farmerId, farmerName: g.farmerName,
         items: g.items.map((i) => ({ name: i.products.name, quantity: i.quantity, price: Number(i.products.price) })),
-        subtotal,
-        delivery,
+        subtotal, delivery,
       };
     });
   })();
 
-  const hasUnavailable = farmerGroups.some((g) => g.delivery.fee === null);
+  const hasUnavailable = farmerGroups.some((g) => g.delivery.fee === null && suburb);
   const canPlace = suburb && items.length > 0 && !hasUnavailable;
+  const totalDistance = farmerGroups.reduce((s, g) => s + g.delivery.distanceKm, 0) / Math.max(farmerGroups.length, 1);
+  const avgFee = farmerGroups.length > 0 ? farmerGroups.reduce((s, g) => s + (g.delivery.fee ?? 0), 0) / farmerGroups.length : 0;
+  const orderTotal = farmerGroups.reduce((s, g) => s + g.subtotal, 0);
 
   const placeOrder = async () => {
     if (!user || !canPlace) return;
@@ -99,33 +97,22 @@ const Checkout = () => {
         const { data: order, error: orderErr } = await supabase
           .from('orders')
           .insert({
-            customer_id: user.id,
-            farmer_id: group.farmerId,
-            delivery_suburb: suburb,
-            delivery_address: address || null,
-            delivery_fee: group.delivery.fee ?? 0,
-            total,
-            payment_method: paymentMethod,
-            status: 'placed',
+            customer_id: user.id, farmer_id: group.farmerId,
+            delivery_suburb: suburb, delivery_address: address || null,
+            delivery_fee: group.delivery.fee ?? 0, total,
+            payment_method: paymentMethod, status: 'placed',
           })
-          .select('id')
-          .single();
+          .select('id').single();
         if (orderErr) throw orderErr;
 
         const orderItems = group.items.map((item) => {
           const cartItem = items.find((ci) => ci.products.name === item.name && ci.products.farmer_id === group.farmerId)!;
-          return {
-            order_id: order.id,
-            product_id: cartItem.product_id,
-            quantity: item.quantity,
-            price_at_purchase: item.price,
-          };
+          return { order_id: order.id, product_id: cartItem.product_id, quantity: item.quantity, price_at_purchase: item.price };
         });
         const { error: itemsErr } = await supabase.from('order_items').insert(orderItems);
         if (itemsErr) throw itemsErr;
       }
 
-      // Clear cart
       await supabase.from('cart_items').delete().eq('user_id', user.id);
       setPlaced(true);
     } catch (err: any) {
@@ -169,22 +156,26 @@ const Checkout = () => {
           </div>
         ) : (
           <>
-            <DeliveryCalculator
-              suburb={suburb}
-              address={address}
-              onSuburbChange={setSuburb}
-              onAddressChange={setAddress}
-            />
+            <DeliveryCalculator suburb={suburb} address={address} onSuburbChange={setSuburb} onAddressChange={setAddress} />
+
+            {hasUnavailable && (
+              <div className="bg-destructive/10 border border-destructive/20 p-3 space-y-1">
+                <p className="text-sm font-medium text-destructive">Delivery unavailable beyond 15km</p>
+                <p className="text-xs text-muted-foreground">Some farms are too far for delivery. Consider pickup or choose a closer suburb.</p>
+              </div>
+            )}
 
             <OrderSummary farmerGroups={farmerGroups} />
 
+            {suburb && totalDistance > 0 && (
+              <AIFeeSuggestion distanceKm={totalDistance} currentFee={avgFee} orderTotal={orderTotal} />
+            )}
+
+            <LogisticsSelector selected={logisticsProvider} onSelect={setLogisticsProvider} />
+
             <PaymentSelector method={paymentMethod} onChange={setPaymentMethod} />
 
-            <Button
-              className="w-full"
-              onClick={placeOrder}
-              disabled={!canPlace || placing}
-            >
+            <Button className="w-full" onClick={placeOrder} disabled={!canPlace || placing}>
               {placing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Place Order
             </Button>

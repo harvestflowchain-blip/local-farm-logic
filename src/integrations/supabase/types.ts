@@ -244,9 +244,18 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
+          delivery_enabled: boolean | null
+          delivery_preference: string | null
+          delivery_radius_km: number | null
+          farm_name: string | null
           full_name: string
           id: string
+          notification_preferences: Json | null
+          onboarding_completed: boolean | null
+          operating_days: string[] | null
           phone: string | null
+          pickup_enabled: boolean | null
+          produce_preferences: string[] | null
           suburb: string | null
           updated_at: string
           user_id: string
@@ -254,9 +263,18 @@ export type Database = {
         Insert: {
           address?: string | null
           created_at?: string
+          delivery_enabled?: boolean | null
+          delivery_preference?: string | null
+          delivery_radius_km?: number | null
+          farm_name?: string | null
           full_name?: string
           id?: string
+          notification_preferences?: Json | null
+          onboarding_completed?: boolean | null
+          operating_days?: string[] | null
           phone?: string | null
+          pickup_enabled?: boolean | null
+          produce_preferences?: string[] | null
           suburb?: string | null
           updated_at?: string
           user_id: string
@@ -264,9 +282,18 @@ export type Database = {
         Update: {
           address?: string | null
           created_at?: string
+          delivery_enabled?: boolean | null
+          delivery_preference?: string | null
+          delivery_radius_km?: number | null
+          farm_name?: string | null
           full_name?: string
           id?: string
+          notification_preferences?: Json | null
+          onboarding_completed?: boolean | null
+          operating_days?: string[] | null
           phone?: string | null
+          pickup_enabled?: boolean | null
+          produce_preferences?: string[] | null
           suburb?: string | null
           updated_at?: string
           user_id?: string

@@ -67,10 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (error) throw error;
     if (data.user) {
-      // Insert role
       const { error: roleError } = await supabase.from('user_roles').insert({ user_id: data.user.id, role });
       if (roleError) throw roleError;
-      // Update profile
       const { error: profileError } = await supabase.from('profiles').update({ full_name: fullName, suburb, phone }).eq('user_id', data.user.id);
       if (profileError) throw profileError;
     }

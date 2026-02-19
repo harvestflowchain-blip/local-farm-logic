@@ -64,7 +64,7 @@ const Auth = () => {
                 <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="customer">Customer (Buyer)</SelectItem>
+                    <SelectItem value="customer">Consumer (Buyer)</SelectItem>
                     <SelectItem value="farmer">Farmer (Vendor)</SelectItem>
                   </SelectContent>
                 </Select>

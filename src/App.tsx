@@ -15,6 +15,9 @@ import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import Pricing from "./pages/Pricing";
 import FarmerDashboard from "./pages/FarmerDashboard";
+import FarmerOnboarding from "./pages/FarmerOnboarding";
+import ConsumerOnboarding from "./pages/ConsumerOnboarding";
+import Calendar from "./pages/Calendar";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +40,9 @@ const App = () => (
             <Route path="/orders" element={<Orders />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/dashboard" element={<FarmerDashboard />} />
+            <Route path="/onboarding/farmer" element={<FarmerOnboarding />} />
+            <Route path="/onboarding/consumer" element={<ConsumerOnboarding />} />
+            <Route path="/calendar" element={<Calendar />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
