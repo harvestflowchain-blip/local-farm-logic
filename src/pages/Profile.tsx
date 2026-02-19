@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
 import { HELDERBERG_SUBURBS } from '@/lib/constants';
-import { Loader2, ArrowLeft, Package, CreditCard } from 'lucide-react';
+import { Loader2, ArrowLeft, Package, CreditCard, Calendar } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import LockedFeature from '@/components/LockedFeature';
 
 const Profile = () => {
   const { user, profile, role, signOut } = useAuth();
@@ -133,12 +134,34 @@ const Profile = () => {
               <Package className="h-4 w-4" /> Order History
             </Button>
           )}
+          <Button variant="outline" className="w-full justify-start gap-2" onClick={() => navigate('/calendar')}>
+            <Calendar className="h-4 w-4" /> Calendar & Schedule
+          </Button>
           <Button variant="outline" className="w-full justify-start gap-2" onClick={() => navigate('/pricing')}>
             <CreditCard className="h-4 w-4" /> Plans & Pricing
           </Button>
           <Button variant="outline" className="w-full text-destructive" onClick={async () => { await signOut(); navigate('/'); }}>
             Sign Out
           </Button>
+        </div>
+
+        {/* Locked premium features */}
+        <div className="border-t pt-4 space-y-3">
+          <p className="text-xs text-muted-foreground uppercase tracking-widest">Premium Features</p>
+          {role === 'customer' && (
+            <LockedFeature
+              title="Order Analytics"
+              description="See spending insights, top categories, and purchase trends."
+              returnTo="/profile"
+            />
+          )}
+          {role === 'farmer' && (
+            <LockedFeature
+              title="Advanced Farm Analytics"
+              description="Revenue trends, customer insights, and seasonal forecasts."
+              returnTo="/dashboard"
+            />
+          )}
         </div>
       </main>
     </div>
