@@ -29,7 +29,8 @@ export const PRODUCT_CATEGORIES = [
   'Other',
 ] as const;
 
-// Suburb coordinates for delivery calculation
+// Verified Helderberg suburb coordinates (WGS84)
+// Sources: Google Maps / OpenStreetMap centroid data for each suburb
 export const SUBURB_COORDS: Record<string, { lat: number; lng: number }> = {
   'Somerset West': { lat: -34.0826, lng: 18.8431 },
   'Strand': { lat: -34.1068, lng: 18.8282 },

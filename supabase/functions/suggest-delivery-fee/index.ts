@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -16,6 +16,18 @@ serve(async (req) => {
     if (!distanceKm || distanceKm <= 0) {
       return new Response(JSON.stringify({ error: "Invalid distance" }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Hard 15km limit enforcement (server-side)
+    if (distanceKm > 15) {
+      return new Response(JSON.stringify({ 
+        error: "Delivery unavailable beyond 15km",
+        unavailable: true,
+        distanceKm 
+      }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -44,7 +56,7 @@ serve(async (req) => {
     if (isPeakHour) reason += " + peak hour adjustment";
     if (orderTotal && orderTotal < 100) reason += " + small order surcharge";
 
-    return new Response(JSON.stringify({ fee: suggestedFee, reason }), {
+    return new Response(JSON.stringify({ fee: suggestedFee, reason, distanceKm }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

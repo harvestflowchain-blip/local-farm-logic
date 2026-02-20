@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -20,9 +20,19 @@ const Auth = () => {
   const [suburb, setSuburb] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user, role: currentRole, onboardingCompleted, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Redirect logged-in users
+  useEffect(() => {
+    if (authLoading || !user) return;
+    if (!onboardingCompleted && currentRole) {
+      navigate(currentRole === 'farmer' ? '/onboarding/farmer' : '/onboarding/consumer', { replace: true });
+    } else {
+      navigate('/', { replace: true });
+    }
+  }, [user, currentRole, onboardingCompleted, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +43,7 @@ const Auth = () => {
         toast({ title: 'Account created', description: 'Please check your email to verify your account.' });
       } else {
         await signIn(email, password);
-        navigate('/');
+        // Redirect handled by useEffect above
       }
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
