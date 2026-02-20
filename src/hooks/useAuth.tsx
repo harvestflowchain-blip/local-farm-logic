@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -11,9 +11,11 @@ interface AuthContextType {
   role: AppRole | null;
   profile: Database['public']['Tables']['profiles']['Row'] | null;
   loading: boolean;
+  onboardingCompleted: boolean;
   signUp: (email: string, password: string, role: AppRole, fullName: string, suburb: string, phone?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,14 +27,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Database['public']['Tables']['profiles']['Row'] | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async (userId: string) => {
+  const onboardingCompleted = profile?.onboarding_completed ?? false;
+
+  const fetchUserData = useCallback(async (userId: string) => {
     const [{ data: roleData }, { data: profileData }] = await Promise.all([
-      supabase.from('user_roles').select('role').eq('user_id', userId).single(),
-      supabase.from('profiles').select('*').eq('user_id', userId).single(),
+      supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle(),
+      supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle(),
     ]);
-    if (roleData) setRole(roleData.role);
+    if (roleData) setRole(roleData.role); else setRole(null);
     if (profileData) setProfile(profileData);
-  };
+  }, []);
+
+  const refreshProfile = useCallback(async () => {
+    if (!user) return;
+    await fetchUserData(user.id);
+  }, [user, fetchUserData]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -57,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchUserData]);
 
   const signUp = async (email: string, password: string, role: AppRole, fullName: string, suburb: string, phone?: string) => {
     const { data, error } = await supabase.auth.signUp({
@@ -86,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, role, profile, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, user, role, profile, loading, onboardingCompleted, signUp, signIn, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

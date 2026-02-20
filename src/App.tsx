@@ -2,8 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import BottomNav from "@/components/BottomNav";
 import ChatBot from "@/components/ChatBot";
 import Index from "./pages/Index";
@@ -23,6 +23,58 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Routes that are allowed even if onboarding is incomplete
+const ONBOARDING_ALLOWED_ROUTES = [
+  '/onboarding/farmer',
+  '/onboarding/consumer',
+  '/auth',
+  '/pricing',
+];
+
+function OnboardingGuard({ children }: { children: React.ReactNode }) {
+  const { user, role, loading, onboardingCompleted } = useAuth();
+  const location = useLocation();
+
+  if (loading) return null;
+
+  // Not logged in, no role set, or admin — no guard
+  if (!user || !role || role === 'admin') return <>{children}</>;
+
+  // Allow onboarding-safe routes
+  if (ONBOARDING_ALLOWED_ROUTES.some(r => location.pathname.startsWith(r))) {
+    return <>{children}</>;
+  }
+
+  // Redirect to onboarding if not completed
+  if (!onboardingCompleted) {
+    const target = role === 'farmer' ? '/onboarding/farmer' : '/onboarding/consumer';
+    return <Navigate to={target} replace />;
+  }
+
+  return <>{children}</>;
+}
+
+const AppRoutes = () => (
+  <OnboardingGuard>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/product/:id" element={<ProductDetail />} />
+      <Route path="/cart" element={<Cart />} />
+      <Route path="/checkout" element={<Checkout />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/orders" element={<Orders />} />
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/dashboard" element={<FarmerDashboard />} />
+      <Route path="/onboarding/farmer" element={<FarmerOnboarding />} />
+      <Route path="/onboarding/consumer" element={<ConsumerOnboarding />} />
+      <Route path="/calendar" element={<Calendar />} />
+      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  </OnboardingGuard>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -30,22 +82,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/dashboard" element={<FarmerDashboard />} />
-            <Route path="/onboarding/farmer" element={<FarmerOnboarding />} />
-            <Route path="/onboarding/consumer" element={<ConsumerOnboarding />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppRoutes />
           <BottomNav />
           <ChatBot />
         </AuthProvider>

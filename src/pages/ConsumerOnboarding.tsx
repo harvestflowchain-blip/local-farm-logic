@@ -12,7 +12,7 @@ import { Loader2, ShoppingBag } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const ConsumerOnboarding = () => {
-  const { user, role, loading: authLoading } = useAuth();
+  const { user, role, loading: authLoading, onboardingCompleted, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
   const [suburb, setSuburb] = useState('');
@@ -23,6 +23,7 @@ const ConsumerOnboarding = () => {
 
   if (authLoading) return null;
   if (!user || role !== 'customer') { navigate('/'); return null; }
+  if (onboardingCompleted) { navigate('/', { replace: true }); return null; }
 
   const togglePref = (cat: string) => {
     setPreferences(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
@@ -45,6 +46,7 @@ const ConsumerOnboarding = () => {
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
+      await refreshProfile();
       toast({ title: 'Welcome to HarvestFlow!' });
       navigate('/');
     }
@@ -106,10 +108,6 @@ const ConsumerOnboarding = () => {
             {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
             Start Shopping
           </Button>
-
-          <button onClick={() => navigate('/')} className="w-full text-center text-xs text-muted-foreground hover:text-foreground">
-            Skip for now
-          </button>
         </div>
       </div>
     </div>

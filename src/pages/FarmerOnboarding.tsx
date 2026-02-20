@@ -8,14 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { HELDERBERG_SUBURBS, PRODUCT_CATEGORIES } from '@/lib/constants';
+import { HELDERBERG_SUBURBS } from '@/lib/constants';
 import { Loader2, Sprout } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const FarmerOnboarding = () => {
-  const { user, role, loading: authLoading } = useAuth();
+  const { user, role, loading: authLoading, onboardingCompleted, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
   const [farmName, setFarmName] = useState('');
@@ -28,6 +28,7 @@ const FarmerOnboarding = () => {
 
   if (authLoading) return null;
   if (!user || role !== 'farmer') { navigate('/'); return null; }
+  if (onboardingCompleted) { navigate('/dashboard', { replace: true }); return null; }
 
   const toggleDay = (day: string) => {
     setOperatingDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
@@ -52,6 +53,7 @@ const FarmerOnboarding = () => {
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
+      await refreshProfile();
       toast({ title: 'Farm setup complete!' });
       navigate('/dashboard');
     }
@@ -120,10 +122,6 @@ const FarmerOnboarding = () => {
             {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
             Complete Setup & Add Products
           </Button>
-
-          <button onClick={() => navigate('/dashboard')} className="w-full text-center text-xs text-muted-foreground hover:text-foreground">
-            Skip for now
-          </button>
         </div>
       </div>
     </div>
