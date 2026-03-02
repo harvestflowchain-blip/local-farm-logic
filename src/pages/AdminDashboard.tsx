@@ -10,8 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Users, Megaphone, BarChart3, Shield, Trash2, ArrowLeft } from 'lucide-react';
+import { Loader2, Users, Megaphone, BarChart3, Shield, Trash2, ArrowLeft, ListTodo } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import LockedFeature from '@/components/LockedFeature';
 
 interface UserRow {
   user_id: string;
@@ -30,24 +31,34 @@ interface Announcement {
   created_at: string;
 }
 
+interface FeatureRequest {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  priority: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 const AdminDashboard = () => {
   const { role, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  // Users
   const [users, setUsers] = useState<UserRow[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
-
-  // Announcements
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [announcementsLoading, setAnnouncementsLoading] = useState(true);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [newTarget, setNewTarget] = useState('all');
   const [publishing, setPublishing] = useState(false);
-
-  // Stats
   const [stats, setStats] = useState({ users: 0, farmers: 0, customers: 0, products: 0, orders: 0 });
+
+  // Feature requests
+  const [requests, setRequests] = useState<FeatureRequest[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(true);
 
   useEffect(() => {
     if (!authLoading && role !== 'admin') navigate('/');
@@ -58,17 +69,16 @@ const AdminDashboard = () => {
     fetchUsers();
     fetchAnnouncements();
     fetchStats();
+    fetchRequests();
   }, [role]);
 
   const fetchUsers = async () => {
     setUsersLoading(true);
     const { data: roles } = await supabase.from('user_roles').select('user_id, role');
     const { data: profiles } = await supabase.from('profiles').select('user_id, full_name, suburb, created_at');
-
     if (roles && profiles) {
       const profileMap: Record<string, any> = {};
       profiles.forEach((p) => { profileMap[p.user_id] = p; });
-
       const merged: UserRow[] = roles.map((r) => ({
         user_id: r.user_id,
         role: r.role,
@@ -83,10 +93,7 @@ const AdminDashboard = () => {
 
   const fetchAnnouncements = async () => {
     setAnnouncementsLoading(true);
-    const { data } = await supabase
-      .from('announcements')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data } = await supabase.from('announcements').select('*').order('created_at', { ascending: false });
     setAnnouncements((data as Announcement[]) || []);
     setAnnouncementsLoading(false);
   };
@@ -97,28 +104,27 @@ const AdminDashboard = () => {
       supabase.from('products').select('*', { count: 'exact', head: true }),
       supabase.from('orders').select('*', { count: 'exact', head: true }),
     ]);
-
     const { data: roleCounts } = await supabase.from('user_roles').select('role');
     const farmers = roleCounts?.filter((r) => r.role === 'farmer').length || 0;
     const customers = roleCounts?.filter((r) => r.role === 'customer').length || 0;
+    setStats({ users: userCount || 0, farmers, customers, products: productCount || 0, orders: orderCount || 0 });
+  };
 
-    setStats({
-      users: userCount || 0,
-      farmers,
-      customers,
-      products: productCount || 0,
-      orders: orderCount || 0,
-    });
+  const fetchRequests = async () => {
+    setRequestsLoading(true);
+    const { data } = await supabase
+      .from('feature_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setRequests((data as FeatureRequest[]) || []);
+    setRequestsLoading(false);
   };
 
   const publishAnnouncement = async () => {
     if (!newTitle || !newContent || !user) return;
     setPublishing(true);
     const { error } = await supabase.from('announcements').insert({
-      title: newTitle,
-      content: newContent,
-      target_role: newTarget,
-      created_by: user.id,
+      title: newTitle, content: newContent, target_role: newTarget, created_by: user.id,
     });
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -141,6 +147,16 @@ const AdminDashboard = () => {
     fetchAnnouncements();
   };
 
+  const updateRequestStatus = async (id: string, status: string) => {
+    await supabase.from('feature_requests').update({ status }).eq('id', id);
+    fetchRequests();
+  };
+
+  const updateRequestPriority = async (id: string, priority: string) => {
+    await supabase.from('feature_requests').update({ priority }).eq('id', id);
+    fetchRequests();
+  };
+
   if (authLoading || role !== 'admin') return null;
 
   return (
@@ -155,13 +171,14 @@ const AdminDashboard = () => {
 
       <main className="px-4 pt-4">
         <Tabs defaultValue="monitoring">
-          <TabsList className="w-full">
-            <TabsTrigger value="monitoring" className="flex-1 text-xs"><BarChart3 className="h-3.5 w-3.5 mr-1" />Stats</TabsTrigger>
-            <TabsTrigger value="users" className="flex-1 text-xs"><Users className="h-3.5 w-3.5 mr-1" />Users</TabsTrigger>
-            <TabsTrigger value="announcements" className="flex-1 text-xs"><Megaphone className="h-3.5 w-3.5 mr-1" />Broadcast</TabsTrigger>
+          <TabsList className="w-full grid grid-cols-4">
+            <TabsTrigger value="monitoring" className="text-xs"><BarChart3 className="h-3.5 w-3.5 mr-1" />Stats</TabsTrigger>
+            <TabsTrigger value="users" className="text-xs"><Users className="h-3.5 w-3.5 mr-1" />Users</TabsTrigger>
+            <TabsTrigger value="announcements" className="text-xs"><Megaphone className="h-3.5 w-3.5 mr-1" />Broadcast</TabsTrigger>
+            <TabsTrigger value="requests" className="text-xs"><ListTodo className="h-3.5 w-3.5 mr-1" />Requests</TabsTrigger>
           </TabsList>
 
-          {/* Monitoring */}
+          {/* Stats */}
           <TabsContent value="monitoring" className="pt-4 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               {[
@@ -198,7 +215,7 @@ const AdminDashboard = () => {
             )}
           </TabsContent>
 
-          {/* Announcements / Signal Broadcaster */}
+          {/* Broadcast */}
           <TabsContent value="announcements" className="pt-4 space-y-6">
             <Card className="p-4 space-y-3">
               <h3 className="text-sm font-semibold">New Broadcast</h3>
@@ -259,6 +276,56 @@ const AdminDashboard = () => {
                 ))
               )}
             </div>
+          </TabsContent>
+
+          {/* Feature Requests Queue */}
+          <TabsContent value="requests" className="pt-4 space-y-3">
+            <h3 className="text-sm font-semibold">Feature Requests Queue</h3>
+            {requestsLoading ? (
+              <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+            ) : requests.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-10">No feature requests yet.</p>
+            ) : (
+              requests.map((r) => (
+                <Card key={r.id} className="p-3 space-y-2">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="space-y-0.5 min-w-0">
+                      <p className="text-sm font-medium">{r.title}</p>
+                      {r.description && <p className="text-xs text-muted-foreground line-clamp-2">{r.description}</p>}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Select value={r.status} onValueChange={(v) => updateRequestStatus(r.id, v)}>
+                      <SelectTrigger className="h-7 w-[120px] text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="reviewing">Reviewing</SelectItem>
+                        <SelectItem value="planned">Planned</SelectItem>
+                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={r.priority} onValueChange={(v) => updateRequestPriority(r.id, v)}>
+                      <SelectTrigger className="h-7 w-[100px] text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="critical">Critical</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      {new Date(r.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                </Card>
+              ))
+            )}
           </TabsContent>
         </Tabs>
       </main>

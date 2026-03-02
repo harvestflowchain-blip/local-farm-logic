@@ -23,7 +23,6 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Routes that are allowed even if onboarding is incomplete
 const ONBOARDING_ALLOWED_ROUTES = [
   '/onboarding/farmer',
   '/onboarding/consumer',
@@ -36,16 +35,9 @@ function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   if (loading) return null;
-
-  // Not logged in, no role set, or admin — no guard
   if (!user || !role || role === 'admin') return <>{children}</>;
+  if (ONBOARDING_ALLOWED_ROUTES.some(r => location.pathname.startsWith(r))) return <>{children}</>;
 
-  // Allow onboarding-safe routes
-  if (ONBOARDING_ALLOWED_ROUTES.some(r => location.pathname.startsWith(r))) {
-    return <>{children}</>;
-  }
-
-  // Redirect to onboarding if not completed
   if (!onboardingCompleted) {
     const target = role === 'farmer' ? '/onboarding/farmer' : '/onboarding/consumer';
     return <Navigate to={target} replace />;
@@ -70,6 +62,7 @@ const AppRoutes = () => (
       <Route path="/onboarding/consumer" element={<ConsumerOnboarding />} />
       <Route path="/calendar" element={<Calendar />} />
       <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/admin/requests" element={<AdminDashboard />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   </OnboardingGuard>
