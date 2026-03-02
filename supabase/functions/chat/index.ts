@@ -14,19 +14,32 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Fetch active products for context
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // Fetch active products for context
     const { data: products } = await adminClient
       .from("products")
-      .select("id, name, category, price, description")
+      .select("id, name, category, price, description, stock_quantity")
       .eq("is_active", true);
 
+    // Fetch recent orders count
+    const { count: orderCount } = await adminClient
+      .from("orders")
+      .select("*", { count: "exact", head: true });
+
+    // Fetch stats
+    const { count: userCount } = await adminClient
+      .from("profiles")
+      .select("*", { count: "exact", head: true });
+
     const catalog = (products || [])
-      .map(p => `- ${p.name} (${p.category || "uncategorized"}) — R${p.price}${p.description ? ": " + p.description : ""}`)
+      .map(p => `- ${p.name} (${p.category || "uncategorized"}) — R${p.price}, stock: ${p.stock_quantity}${p.description ? ": " + p.description : ""}`)
       .join("\n");
+
+    const lastUpdated = new Date().toISOString();
 
     const systemPrompt = `You are a friendly assistant for HarvestFlow, a fresh produce marketplace connecting customers with local farms in the Helderberg area (Somerset West, Strand, Gordon's Bay, Stellenbosch).
 
@@ -35,11 +48,19 @@ Your role:
 - Be warm, knowledgeable, and concise
 - When recommending products, mention them by name and price
 - Keep responses short (2-4 sentences usually)
+- IMPORTANT: Only answer based on the data provided below. Do NOT hallucinate or make up data.
+- If you don't have data to answer a question, say: "I don't have fresh data on that right now. Last updated: ${lastUpdated}"
+
+Platform stats (last updated: ${lastUpdated}):
+- Total users: ${userCount || 0}
+- Total orders: ${orderCount || 0}
+- Active products: ${(products || []).length}
 
 Current product catalog:
 ${catalog || "No products currently listed."}
 
-If asked about delivery, mention we deliver to Helderberg suburbs with fees of R35-R50 depending on distance.`;
+If asked about delivery, mention we deliver to Helderberg suburbs with fees of R35-R50 depending on distance, max 15km radius.
+If asked about "network health" or platform status, report the stats above and say the platform is operational.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
