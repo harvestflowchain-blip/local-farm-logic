@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.suggest-delivery-fee]
 verify_jwt = false
+
+[functions.paypal-client-token]
+verify_jwt = false
+
+[functions.paypal-create-order]
+verify_jwt = false
+
+[functions.paypal-capture-order]
+verify_jwt = false

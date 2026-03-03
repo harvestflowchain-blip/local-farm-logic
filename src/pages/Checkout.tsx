@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, ArrowLeft, CheckCircle2, CreditCard } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { calculateDeliveryFee } from '@/lib/delivery';
 import DeliveryCalculator from '@/components/checkout/DeliveryCalculator';
@@ -15,9 +17,20 @@ import type { Tables } from '@/integrations/supabase/types';
 
 type CartItemWithProduct = Tables<'cart_items'> & { products: Tables<'products'> };
 
+const PLAN_LABELS: Record<string, string> = {
+  plus: 'Plus', family: 'Family', growth: 'Growth', pro: 'Pro',
+};
+
 const Checkout = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Upgrade flow params
+  const upgradePlan = searchParams.get('plan');
+  const upgradePeriod = searchParams.get('period') || 'monthly';
+  const returnTo = searchParams.get('return_to');
+  const isUpgradeFlow = !!upgradePlan && upgradePlan !== 'free';
 
   const [items, setItems] = useState<CartItemWithProduct[]>([]);
   const [farmerProfiles, setFarmerProfiles] = useState<Record<string, Tables<'profiles'>>>({});
@@ -27,11 +40,16 @@ const Checkout = () => {
 
   const [suburb, setSuburb] = useState(profile?.suburb || '');
   const [address, setAddress] = useState(profile?.address || '');
-  const [paymentMethod, setPaymentMethod] = useState('payfast');
+  const [paymentMethod, setPaymentMethod] = useState('paypal');
   const [logisticsProvider, setLogisticsProvider] = useState('standard');
+
+  // PayPal upgrade state
+  const [paypalLoading, setPaypalLoading] = useState(false);
+  const [upgradeComplete, setUpgradeComplete] = useState(false);
 
   useEffect(() => {
     if (!user) { navigate('/auth'); return; }
+    if (isUpgradeFlow) { setLoading(false); return; }
     const load = async () => {
       const { data: cartData } = await supabase
         .from('cart_items')
@@ -60,7 +78,54 @@ const Checkout = () => {
     if (profile?.address && !address) setAddress(profile.address);
   }, [profile]);
 
+  // PayPal upgrade handler
+  const handlePayPalUpgrade = async () => {
+    if (!user || !upgradePlan) return;
+    setPaypalLoading(true);
+    try {
+      // 1. Create order server-side
+      const { data: orderData, error: createErr } = await supabase.functions.invoke('paypal-create-order', {
+        body: { plan: upgradePlan, period: upgradePeriod },
+      });
+      if (createErr || !orderData?.id) throw new Error(createErr?.message || 'Failed to create order');
+
+      // 2. Open PayPal approval window
+      // For sandbox, we redirect to PayPal approval URL
+      const approvalUrl = `https://www.sandbox.paypal.com/checkoutnow?token=${orderData.id}`;
+      const paypalWindow = window.open(approvalUrl, 'paypal', 'width=500,height=700');
+
+      // 3. Poll for window close and capture
+      toast({ title: 'PayPal', description: 'Complete payment in the PayPal window. Once done, click "Confirm Payment" below.' });
+
+      // Store orderId for capture
+      setPaypalOrderId(orderData.id);
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
+    setPaypalLoading(false);
+  };
+
+  const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
+
+  const capturePayPalOrder = async () => {
+    if (!paypalOrderId || !upgradePlan) return;
+    setPaypalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('paypal-capture-order', {
+        body: { orderId: paypalOrderId, plan: upgradePlan, period: upgradePeriod },
+      });
+      if (error || !data?.success) throw new Error(error?.message || data?.error || 'Capture failed');
+      setUpgradeComplete(true);
+      toast({ title: 'Upgrade successful!', description: `You are now on the ${PLAN_LABELS[upgradePlan] || upgradePlan} plan.` });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
+    setPaypalLoading(false);
+  };
+
+  // Cart checkout groups
   const farmerGroups: FarmerGroup[] = (() => {
+    if (isUpgradeFlow) return [];
     const grouped: Record<string, { items: CartItemWithProduct[]; farmerSuburb: string; farmerName: string }> = {};
     items.forEach((item) => {
       const fid = item.products.farmer_id;
@@ -70,7 +135,6 @@ const Checkout = () => {
       }
       grouped[fid].items.push(item);
     });
-
     return Object.entries(grouped).map(([farmerId, g]) => {
       const subtotal = g.items.reduce((s, i) => s + Number(i.products.price) * i.quantity, 0);
       const delivery = suburb ? calculateDeliveryFee(suburb, g.farmerSuburb) : { distanceKm: 0, fee: null, label: 'Select suburb' };
@@ -104,7 +168,6 @@ const Checkout = () => {
           })
           .select('id').single();
         if (orderErr) throw orderErr;
-
         const orderItems = group.items.map((item) => {
           const cartItem = items.find((ci) => ci.products.name === item.name && ci.products.farmer_id === group.farmerId)!;
           return { order_id: order.id, product_id: cartItem.product_id, quantity: item.quantity, price_at_purchase: item.price };
@@ -112,7 +175,6 @@ const Checkout = () => {
         const { error: itemsErr } = await supabase.from('order_items').insert(orderItems);
         if (itemsErr) throw itemsErr;
       }
-
       await supabase.from('cart_items').delete().eq('user_id', user.id);
       setPlaced(true);
     } catch (err: any) {
@@ -124,17 +186,81 @@ const Checkout = () => {
 
   if (!user) return null;
 
+  // Upgrade complete view
+  if (upgradeComplete) {
+    return (
+      <div className="min-h-screen pb-20 flex flex-col items-center justify-center px-4 text-center space-y-4">
+        <CheckCircle2 className="h-12 w-12 text-success" />
+        <h1 className="text-xl font-bold tracking-tight">Upgrade Complete!</h1>
+        <p className="text-sm text-muted-foreground">You're now on the {PLAN_LABELS[upgradePlan!] || upgradePlan} plan.</p>
+        <Button variant="outline" onClick={() => navigate(returnTo || '/')}>Continue</Button>
+      </div>
+    );
+  }
+
   if (placed) {
     return (
       <div className="min-h-screen pb-20 flex flex-col items-center justify-center px-4 text-center space-y-4">
         <CheckCircle2 className="h-12 w-12 text-success" />
         <h1 className="text-xl font-bold tracking-tight">Order Placed!</h1>
-        <p className="text-sm text-muted-foreground">Your order has been sent to the farmer(s). You'll be notified when it's ready.</p>
+        <p className="text-sm text-muted-foreground">Your order has been sent to the farmer(s).</p>
         <Button variant="outline" onClick={() => navigate('/')}>Back to Shop</Button>
       </div>
     );
   }
 
+  // Upgrade flow UI
+  if (isUpgradeFlow) {
+    return (
+      <div className="min-h-screen pb-24">
+        <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
+          <div className="flex items-center gap-3 px-4 py-4">
+            <button onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></button>
+            <h1 className="text-xl font-bold tracking-tight">Checkout</h1>
+          </div>
+        </header>
+        <main className="px-4 pt-6 space-y-6 max-w-lg mx-auto">
+          <Card className="p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-lg font-bold tracking-tight">Plan Upgrade</h2>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Plan</span>
+                <span className="font-medium">{PLAN_LABELS[upgradePlan!] || upgradePlan}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Billing</span>
+                <span className="font-medium capitalize">{upgradePeriod}</span>
+              </div>
+            </div>
+          </Card>
+
+          <PaymentSelector method={paymentMethod} onChange={setPaymentMethod} />
+
+          {!paypalOrderId ? (
+            <Button className="w-full" onClick={handlePayPalUpgrade} disabled={paypalLoading}>
+              {paypalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Pay with PayPal
+            </Button>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-center text-muted-foreground">
+                Complete payment in the PayPal window, then click below.
+              </p>
+              <Button className="w-full" onClick={capturePayPalOrder} disabled={paypalLoading}>
+                {paypalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Confirm Payment
+              </Button>
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
+  // Standard cart checkout
   return (
     <div className="min-h-screen pb-24">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
@@ -144,7 +270,7 @@ const Checkout = () => {
         </div>
       </header>
 
-      <main className="px-4 pt-6 space-y-8">
+      <main className="px-4 pt-6 space-y-8 max-w-lg mx-auto">
         {loading ? (
           <div className="flex justify-center py-20">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -172,7 +298,6 @@ const Checkout = () => {
             )}
 
             <LogisticsSelector selected={logisticsProvider} onSelect={setLogisticsProvider} />
-
             <PaymentSelector method={paymentMethod} onChange={setPaymentMethod} />
 
             <Button className="w-full" onClick={placeOrder} disabled={!canPlace || placing}>
