@@ -60,7 +60,7 @@ Current product catalog:
 ${catalog || "No products currently listed."}
 
 If asked about delivery, mention we deliver to Helderberg suburbs with fees of R35-R50 depending on distance, max 15km radius.
-If asked about "network health" or platform status, report the stats above and say the platform is operational.`;
+If asked about "network health", IT infrastructure, or topics unrelated to farming/produce/orders, respond: "I'm here to help with produce, orders, delivery and farm info. Try asking about available produce or delivery options!" Do NOT fabricate network metrics, server status, or technical data.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
