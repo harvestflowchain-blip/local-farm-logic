@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, CheckCircle2, CreditCard } from 'lucide-react';
+import { Loader2, ArrowLeft, CheckCircle2, CreditCard, AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { calculateDeliveryFee } from '@/lib/delivery';
 import DeliveryCalculator from '@/components/checkout/DeliveryCalculator';
@@ -26,7 +26,6 @@ const Checkout = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Upgrade flow params
   const upgradePlan = searchParams.get('plan');
   const upgradePeriod = searchParams.get('period') || 'monthly';
   const returnTo = searchParams.get('return_to');
@@ -43,9 +42,15 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState('paypal');
   const [logisticsProvider, setLogisticsProvider] = useState('standard');
 
+  // Server-side distance validation
+  const [validatingDelivery, setValidatingDelivery] = useState(false);
+  const [deliveryBlocked, setDeliveryBlocked] = useState(false);
+  const [deliveryError, setDeliveryError] = useState<string | null>(null);
+
   // PayPal upgrade state
   const [paypalLoading, setPaypalLoading] = useState(false);
   const [upgradeComplete, setUpgradeComplete] = useState(false);
+  const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) { navigate('/auth'); return; }
@@ -78,34 +83,59 @@ const Checkout = () => {
     if (profile?.address && !address) setAddress(profile.address);
   }, [profile]);
 
+  // Server-side delivery validation when suburb changes
+  useEffect(() => {
+    if (!suburb || isUpgradeFlow || items.length === 0) {
+      setDeliveryBlocked(false);
+      setDeliveryError(null);
+      return;
+    }
+
+    const validate = async () => {
+      setValidatingDelivery(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('validate-delivery', {
+          body: { suburb },
+        });
+        if (error || !data) {
+          setDeliveryBlocked(true);
+          setDeliveryError('Unable to validate delivery distance');
+        } else if (!data.valid) {
+          setDeliveryBlocked(true);
+          setDeliveryError(data.error || 'Delivery unavailable beyond 15km');
+        } else {
+          setDeliveryBlocked(false);
+          setDeliveryError(null);
+        }
+      } catch {
+        setDeliveryBlocked(true);
+        setDeliveryError('Unable to validate delivery');
+      }
+      setValidatingDelivery(false);
+    };
+    validate();
+  }, [suburb, items.length]);
+
   // PayPal upgrade handler
   const handlePayPalUpgrade = async () => {
     if (!user || !upgradePlan) return;
     setPaypalLoading(true);
     try {
-      // 1. Create order server-side
       const { data: orderData, error: createErr } = await supabase.functions.invoke('paypal-create-order', {
         body: { plan: upgradePlan, period: upgradePeriod },
       });
       if (createErr || !orderData?.id) throw new Error(createErr?.message || 'Failed to create order');
 
-      // 2. Open PayPal approval window
-      // For sandbox, we redirect to PayPal approval URL
       const approvalUrl = `https://www.sandbox.paypal.com/checkoutnow?token=${orderData.id}`;
-      const paypalWindow = window.open(approvalUrl, 'paypal', 'width=500,height=700');
+      window.open(approvalUrl, 'paypal', 'width=500,height=700');
 
-      // 3. Poll for window close and capture
       toast({ title: 'PayPal', description: 'Complete payment in the PayPal window. Once done, click "Confirm Payment" below.' });
-
-      // Store orderId for capture
       setPaypalOrderId(orderData.id);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     }
     setPaypalLoading(false);
   };
-
-  const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
 
   const capturePayPalOrder = async () => {
     if (!paypalOrderId || !upgradePlan) return;
@@ -147,7 +177,7 @@ const Checkout = () => {
   })();
 
   const hasUnavailable = farmerGroups.some((g) => g.delivery.fee === null && suburb);
-  const canPlace = suburb && items.length > 0 && !hasUnavailable;
+  const canPlace = suburb && items.length > 0 && !hasUnavailable && !deliveryBlocked && !validatingDelivery;
   const totalDistance = farmerGroups.reduce((s, g) => s + g.delivery.distanceKm, 0) / Math.max(farmerGroups.length, 1);
   const avgFee = farmerGroups.length > 0 ? farmerGroups.reduce((s, g) => s + (g.delivery.fee ?? 0), 0) / farmerGroups.length : 0;
   const orderTotal = farmerGroups.reduce((s, g) => s + g.subtotal, 0);
@@ -156,6 +186,17 @@ const Checkout = () => {
     if (!user || !canPlace) return;
     setPlacing(true);
     try {
+      // Final server-side distance check before order
+      const { data: validation } = await supabase.functions.invoke('validate-delivery', {
+        body: { suburb },
+      });
+      if (!validation?.valid) {
+        toast({ title: 'Delivery blocked', description: validation?.error || 'Delivery unavailable beyond 15km', variant: 'destructive' });
+        setDeliveryBlocked(true);
+        setPlacing(false);
+        return;
+      }
+
       for (const group of farmerGroups) {
         const total = group.subtotal + (group.delivery.fee ?? 0);
         const { data: order, error: orderErr } = await supabase
@@ -186,11 +227,10 @@ const Checkout = () => {
 
   if (!user) return null;
 
-  // Upgrade complete view
   if (upgradeComplete) {
     return (
       <div className="min-h-screen pb-20 flex flex-col items-center justify-center px-4 text-center space-y-4">
-        <CheckCircle2 className="h-12 w-12 text-success" />
+        <CheckCircle2 className="h-12 w-12 text-primary" />
         <h1 className="text-xl font-bold tracking-tight">Upgrade Complete!</h1>
         <p className="text-sm text-muted-foreground">You're now on the {PLAN_LABELS[upgradePlan!] || upgradePlan} plan.</p>
         <Button variant="outline" onClick={() => navigate(returnTo || '/')}>Continue</Button>
@@ -201,7 +241,7 @@ const Checkout = () => {
   if (placed) {
     return (
       <div className="min-h-screen pb-20 flex flex-col items-center justify-center px-4 text-center space-y-4">
-        <CheckCircle2 className="h-12 w-12 text-success" />
+        <CheckCircle2 className="h-12 w-12 text-primary" />
         <h1 className="text-xl font-bold tracking-tight">Order Placed!</h1>
         <p className="text-sm text-muted-foreground">Your order has been sent to the farmer(s).</p>
         <Button variant="outline" onClick={() => navigate('/')}>Back to Shop</Button>
@@ -233,6 +273,10 @@ const Checkout = () => {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Billing</span>
                 <span className="font-medium capitalize">{upgradePeriod}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Payment</span>
+                <span className="font-medium">PayPal (Sandbox)</span>
               </div>
             </div>
           </Card>
@@ -284,16 +328,28 @@ const Checkout = () => {
           <>
             <DeliveryCalculator suburb={suburb} address={address} onSuburbChange={setSuburb} onAddressChange={setAddress} />
 
-            {hasUnavailable && (
-              <div className="bg-destructive/10 border border-destructive/20 p-3 space-y-1">
-                <p className="text-sm font-medium text-destructive">Delivery unavailable beyond 15km</p>
-                <p className="text-xs text-muted-foreground">Some farms are too far for delivery. Consider pickup or choose a closer suburb.</p>
+            {validatingDelivery && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Validating delivery distance...</span>
+              </div>
+            )}
+
+            {(deliveryBlocked || hasUnavailable) && !validatingDelivery && (
+              <div className="bg-destructive/10 border border-destructive/20 p-3 space-y-1 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-destructive">
+                    {deliveryError || 'Delivery unavailable beyond 15km'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Choose a closer suburb or consider pickup.</p>
+                </div>
               </div>
             )}
 
             <OrderSummary farmerGroups={farmerGroups} />
 
-            {suburb && totalDistance > 0 && (
+            {suburb && totalDistance > 0 && !deliveryBlocked && (
               <AIFeeSuggestion distanceKm={totalDistance} currentFee={avgFee} orderTotal={orderTotal} />
             )}
 
@@ -302,7 +358,7 @@ const Checkout = () => {
 
             <Button className="w-full" onClick={placeOrder} disabled={!canPlace || placing}>
               {placing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Place Order
+              {deliveryBlocked ? 'Delivery Blocked' : 'Place Order'}
             </Button>
           </>
         )}

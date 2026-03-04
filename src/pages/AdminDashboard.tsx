@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Users, Megaphone, BarChart3, Shield, Trash2, ArrowLeft, ListTodo } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import LockedFeature from '@/components/LockedFeature';
 
 interface UserRow {
   user_id: string;
@@ -56,7 +55,6 @@ const AdminDashboard = () => {
   const [publishing, setPublishing] = useState(false);
   const [stats, setStats] = useState({ users: 0, farmers: 0, customers: 0, products: 0, orders: 0 });
 
-  // Feature requests
   const [requests, setRequests] = useState<FeatureRequest[]>([]);
   const [requestsLoading, setRequestsLoading] = useState(true);
 
@@ -66,27 +64,26 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (role !== 'admin') return;
-    fetchUsers();
-    fetchAnnouncements();
-    fetchStats();
-    fetchRequests();
+    // Parallel fetch all admin data
+    Promise.all([fetchUsers(), fetchAnnouncements(), fetchStats(), fetchRequests()]);
   }, [role]);
 
   const fetchUsers = async () => {
     setUsersLoading(true);
-    const { data: roles } = await supabase.from('user_roles').select('user_id, role');
-    const { data: profiles } = await supabase.from('profiles').select('user_id, full_name, suburb, created_at');
+    const [{ data: roles }, { data: profiles }] = await Promise.all([
+      supabase.from('user_roles').select('user_id, role'),
+      supabase.from('profiles').select('user_id, full_name, suburb, created_at'),
+    ]);
     if (roles && profiles) {
       const profileMap: Record<string, any> = {};
       profiles.forEach((p) => { profileMap[p.user_id] = p; });
-      const merged: UserRow[] = roles.map((r) => ({
+      setUsers(roles.map((r) => ({
         user_id: r.user_id,
         role: r.role,
         full_name: profileMap[r.user_id]?.full_name || '—',
         suburb: profileMap[r.user_id]?.suburb || null,
         created_at: profileMap[r.user_id]?.created_at || '',
-      }));
-      setUsers(merged);
+      })));
     }
     setUsersLoading(false);
   };
@@ -99,12 +96,12 @@ const AdminDashboard = () => {
   };
 
   const fetchStats = async () => {
-    const [{ count: userCount }, { count: productCount }, { count: orderCount }] = await Promise.all([
+    const [{ count: userCount }, { count: productCount }, { count: orderCount }, { data: roleCounts }] = await Promise.all([
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase.from('products').select('*', { count: 'exact', head: true }),
       supabase.from('orders').select('*', { count: 'exact', head: true }),
+      supabase.from('user_roles').select('role'),
     ]);
-    const { data: roleCounts } = await supabase.from('user_roles').select('role');
     const farmers = roleCounts?.filter((r) => r.role === 'farmer').length || 0;
     const customers = roleCounts?.filter((r) => r.role === 'customer').length || 0;
     setStats({ users: userCount || 0, farmers, customers, products: productCount || 0, orders: orderCount || 0 });
@@ -112,10 +109,7 @@ const AdminDashboard = () => {
 
   const fetchRequests = async () => {
     setRequestsLoading(true);
-    const { data } = await supabase
-      .from('feature_requests')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data } = await supabase.from('feature_requests').select('*').order('created_at', { ascending: false });
     setRequests((data as FeatureRequest[]) || []);
     setRequestsLoading(false);
   };
@@ -148,13 +142,21 @@ const AdminDashboard = () => {
   };
 
   const updateRequestStatus = async (id: string, status: string) => {
-    await supabase.from('feature_requests').update({ status }).eq('id', id);
-    fetchRequests();
+    const { error } = await supabase.from('feature_requests').update({ status }).eq('id', id);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+    }
   };
 
   const updateRequestPriority = async (id: string, priority: string) => {
-    await supabase.from('feature_requests').update({ priority }).eq('id', id);
-    fetchRequests();
+    const { error } = await supabase.from('feature_requests').update({ priority }).eq('id', id);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      setRequests(prev => prev.map(r => r.id === id ? { ...r, priority } : r));
+    }
   };
 
   if (authLoading || role !== 'admin') return null;
@@ -178,7 +180,6 @@ const AdminDashboard = () => {
             <TabsTrigger value="requests" className="text-xs"><ListTodo className="h-3.5 w-3.5 mr-1" />Requests</TabsTrigger>
           </TabsList>
 
-          {/* Stats */}
           <TabsContent value="monitoring" className="pt-4 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               {[
@@ -196,7 +197,6 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* Users */}
           <TabsContent value="users" className="pt-4 space-y-3">
             {usersLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
@@ -215,7 +215,6 @@ const AdminDashboard = () => {
             )}
           </TabsContent>
 
-          {/* Broadcast */}
           <TabsContent value="announcements" className="pt-4 space-y-6">
             <Card className="p-4 space-y-3">
               <h3 className="text-sm font-semibold">New Broadcast</h3>
@@ -278,9 +277,13 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* Feature Requests Queue */}
           <TabsContent value="requests" className="pt-4 space-y-3">
-            <h3 className="text-sm font-semibold">Feature Requests Queue</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Feature Requests Queue</h3>
+              <Button variant="ghost" size="sm" onClick={fetchRequests} className="text-xs h-7">
+                Refresh
+              </Button>
+            </div>
             {requestsLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
             ) : requests.length === 0 ? (
