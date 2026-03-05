@@ -32,7 +32,8 @@ const BottomNav = () => {
     { to: '/calendar', icon: Calendar, label: 'Schedule' },
     ...(role === 'farmer' ? [{ to: '/dashboard', icon: Sprout, label: 'Farm Dashboard' }] : []),
     ...(role === 'admin' ? [{ to: '/admin', icon: BarChart3, label: 'Admin Console' }] : []),
-    { to: '/profile', icon: Settings, label: 'Settings' },
+    { to: '/settings', icon: Settings, label: 'Settings' },
+    { to: '/profile', icon: User, label: 'Profile' },
   ];
 
   // Mobile: show hamburger in a compact bar

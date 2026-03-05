@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Package, ArrowLeft } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Tables } from '@/integrations/supabase/types';
 
 interface OrderItem {
@@ -96,8 +97,14 @@ const Orders = () => {
 
       <main className="px-4 pt-4 space-y-3">
         {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i} className="p-4 space-y-3">
+                <div className="flex justify-between"><Skeleton className="h-4 w-1/3" /><Skeleton className="h-5 w-16" /></div>
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+              </Card>
+            ))}
           </div>
         ) : orders.length === 0 ? (
           <div className="text-center py-20 space-y-3">

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft, CheckCircle2, CreditCard, AlertTriangle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
 import { calculateDeliveryFee } from '@/lib/delivery';
 import DeliveryCalculator from '@/components/checkout/DeliveryCalculator';
@@ -316,8 +317,10 @@ const Checkout = () => {
 
       <main className="px-4 pt-6 space-y-8 max-w-lg mx-auto">
         {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="space-y-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-12 w-full" />
           </div>
         ) : items.length === 0 ? (
           <div className="text-center py-20 space-y-2">
