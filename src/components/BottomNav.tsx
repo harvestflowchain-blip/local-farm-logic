@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, ShoppingCart, User, BarChart3, Sprout, Package, Calendar, Menu, X, DollarSign, Settings } from 'lucide-react';
+import { Home, ShoppingCart, User, BarChart3, Sprout, Package, Calendar, Menu, X, DollarSign } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
@@ -32,8 +32,7 @@ const BottomNav = () => {
     { to: '/calendar', icon: Calendar, label: 'Schedule' },
     ...(role === 'farmer' ? [{ to: '/dashboard', icon: Sprout, label: 'Farm Dashboard' }] : []),
     ...(role === 'admin' ? [{ to: '/admin', icon: BarChart3, label: 'Admin Console' }] : []),
-    { to: '/settings', icon: Settings, label: 'Settings' },
-    { to: '/profile', icon: User, label: 'Profile' },
+    { to: '/profile', icon: User, label: 'Profile & Settings' },
   ];
 
   // Mobile: show hamburger in a compact bar
