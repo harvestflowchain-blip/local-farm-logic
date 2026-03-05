@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Minus, Plus, Trash2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -49,16 +50,32 @@ const Cart = () => {
 
       <main className="px-4 pt-4 space-y-4">
         {loading ? (
-          <p className="text-center text-muted-foreground py-10">Loading...</p>
+          <div className="space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex gap-3 border-b pb-4">
+                <Skeleton className="h-20 w-16 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-6 w-24" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : items.length === 0 ? (
-          <p className="text-center text-muted-foreground py-10">Your cart is empty</p>
+          <div className="text-center py-20 space-y-3">
+            <ShoppingBag className="h-10 w-10 mx-auto text-muted-foreground" />
+            <p className="text-lg font-medium">Your cart is empty</p>
+            <p className="text-sm text-muted-foreground">Add some fresh produce from the marketplace.</p>
+            <Button variant="outline" onClick={() => navigate('/')}>Browse Products</Button>
+          </div>
         ) : (
           <>
             {items.map((item) => (
               <div key={item.id} className="flex gap-3 border-b pb-4">
                 <div className="h-20 w-16 bg-secondary shrink-0 overflow-hidden">
                   {item.products.image_url && (
-                    <img src={item.products.image_url} alt={item.products.name} className="h-full w-full object-cover" />
+                    <img src={item.products.image_url} alt={item.products.name} className="h-full w-full object-cover" loading="lazy" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0 space-y-1">

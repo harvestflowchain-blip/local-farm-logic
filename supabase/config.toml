@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.paypal-capture-order]
 verify_jwt = false
+
+[functions.validate-delivery]
+verify_jwt = false
