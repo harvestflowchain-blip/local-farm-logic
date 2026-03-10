@@ -44,6 +44,8 @@ const FarmerDashboard = () => {
           </TabsContent>
         </Tabs>
 
+        <HarvestPlanner />
+
         {/* Locked premium features */}
         <div className="space-y-3">
           <LockedFeature
