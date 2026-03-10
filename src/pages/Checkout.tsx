@@ -22,6 +22,19 @@ const PLAN_LABELS: Record<string, string> = {
   plus: 'Plus', family: 'Family', growth: 'Growth', pro: 'Pro',
 };
 
+const PLAN_MONTHLY_PRICES: Record<string, number> = {
+  plus: 49, family: 99, growth: 149, pro: 349,
+};
+
+const PERIOD_MULTIPLIER: Record<string, number> = { monthly: 1, quarterly: 2.7, yearly: 9.6 };
+const PERIOD_LABELS: Record<string, string> = { monthly: '/month', quarterly: '/quarter', yearly: '/year' };
+
+function getUpgradePrice(plan: string, period: string): number {
+  const monthly = PLAN_MONTHLY_PRICES[plan] || 0;
+  const mult = PERIOD_MULTIPLIER[period] || 1;
+  return Math.round(monthly * mult);
+}
+
 const Checkout = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
