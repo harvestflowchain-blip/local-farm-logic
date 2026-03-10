@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import ProductList from '@/components/farmer/ProductList';
 import OrderList from '@/components/farmer/OrderList';
 import LockedFeature from '@/components/LockedFeature';
+import HarvestPlanner from '@/components/farmer/HarvestPlanner';
 import { useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 
@@ -42,6 +43,8 @@ const FarmerDashboard = () => {
             <OrderList />
           </TabsContent>
         </Tabs>
+
+        <HarvestPlanner />
 
         {/* Locked premium features */}
         <div className="space-y-3">
