@@ -62,7 +62,7 @@ const Pricing = () => {
 
   const handleUpgrade = (planId: string) => {
     if (!user) { navigate('/auth'); return; }
-    navigate(`/checkout?plan=${planId}&period=${period}${returnTo ? `&return_to=${encodeURIComponent(returnTo)}` : ''}`);
+    navigate(`/checkout?plan=${planId}&period=${period}&provider=paypal${returnTo ? `&return_to=${encodeURIComponent(returnTo)}` : ''}`);
   };
 
   const submitFeatureRequest = async () => {
