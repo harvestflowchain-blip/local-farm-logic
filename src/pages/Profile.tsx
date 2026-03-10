@@ -64,14 +64,24 @@ const Profile = () => {
 
       if (profileError) throw profileError;
 
-      // Update role if changed (non-admin only)
+      // Upsert role if changed (non-admin only)
       if (role !== 'admin' && selectedRole && selectedRole !== role) {
-        const { error: roleError } = await supabase
+        // First try update
+        const { data: updated, error: updateErr } = await supabase
           .from('user_roles')
           .update({ role: selectedRole as any })
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .select();
 
-        if (roleError) throw roleError;
+        if (updateErr) throw updateErr;
+
+        // If no row existed, insert instead
+        if (!updated || updated.length === 0) {
+          const { error: insertErr } = await supabase
+            .from('user_roles')
+            .insert({ user_id: user.id, role: selectedRole as any });
+          if (insertErr) throw insertErr;
+        }
       }
 
       await refreshProfile();
