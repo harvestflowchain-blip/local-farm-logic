@@ -22,6 +22,19 @@ const PLAN_LABELS: Record<string, string> = {
   plus: 'Plus', family: 'Family', growth: 'Growth', pro: 'Pro',
 };
 
+const PLAN_MONTHLY_PRICES: Record<string, number> = {
+  plus: 49, family: 99, growth: 149, pro: 349,
+};
+
+const PERIOD_MULTIPLIER: Record<string, number> = { monthly: 1, quarterly: 2.7, yearly: 9.6 };
+const PERIOD_LABELS: Record<string, string> = { monthly: '/month', quarterly: '/quarter', yearly: '/year' };
+
+function getUpgradePrice(plan: string, period: string): number {
+  const monthly = PLAN_MONTHLY_PRICES[plan] || 0;
+  const mult = PERIOD_MULTIPLIER[period] || 1;
+  return Math.round(monthly * mult);
+}
+
 const Checkout = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -253,14 +266,14 @@ const Checkout = () => {
   // Upgrade flow UI
   if (isUpgradeFlow) {
     return (
-      <div className="min-h-screen pb-24">
+      <div className="min-h-screen pb-24 overflow-x-hidden">
         <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
           <div className="flex items-center gap-3 px-4 py-4">
             <button onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></button>
             <h1 className="text-xl font-bold tracking-tight">Checkout</h1>
           </div>
         </header>
-        <main className="px-4 pt-6 space-y-6 max-w-lg mx-auto">
+        <main className="px-4 pt-6 space-y-6 max-w-lg mx-auto w-full">
           <Card className="p-5 space-y-4">
             <div className="flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-muted-foreground" />
@@ -274,6 +287,10 @@ const Checkout = () => {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Billing</span>
                 <span className="font-medium capitalize">{upgradePeriod}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Amount</span>
+                <span className="font-bold text-base">R{getUpgradePrice(upgradePlan!, upgradePeriod)}{PERIOD_LABELS[upgradePeriod] || ''}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Payment</span>
@@ -307,7 +324,7 @@ const Checkout = () => {
 
   // Standard cart checkout
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen pb-24 overflow-x-hidden">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center gap-3 px-4 py-4">
           <button onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></button>
@@ -315,7 +332,7 @@ const Checkout = () => {
         </div>
       </header>
 
-      <main className="px-4 pt-6 space-y-8 max-w-lg mx-auto">
+      <main className="px-4 pt-6 space-y-8 max-w-lg mx-auto w-full">
         {loading ? (
           <div className="space-y-4">
             <Skeleton className="h-24 w-full" />

@@ -62,7 +62,7 @@ const Pricing = () => {
 
   const handleUpgrade = (planId: string) => {
     if (!user) { navigate('/auth'); return; }
-    navigate(`/checkout?plan=${planId}&period=${period}${returnTo ? `&return_to=${encodeURIComponent(returnTo)}` : ''}`);
+    navigate(`/checkout?plan=${planId}&period=${period}&provider=paypal${returnTo ? `&return_to=${encodeURIComponent(returnTo)}` : ''}`);
   };
 
   const submitFeatureRequest = async () => {
@@ -132,7 +132,7 @@ const Pricing = () => {
   );
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-20 overflow-x-hidden">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center gap-3 px-4 py-4">
           <button onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></button>
