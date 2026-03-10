@@ -88,7 +88,7 @@ const Profile = () => {
       toast({ title: 'Profile saved', description: 'Your changes have been applied.' });
 
       // Redirect to correct dashboard after role switch
-      if (role !== 'admin' && selectedRole !== role) {
+      if (role !== 'admin' && selectedRole && selectedRole !== role) {
         if (selectedRole === 'farmer') {
           navigate('/dashboard');
         } else {
