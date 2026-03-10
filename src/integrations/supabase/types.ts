@@ -109,6 +109,39 @@ export type Database = {
         }
         Relationships: []
       }
+      harvest_entries: {
+        Row: {
+          created_at: string
+          crop_name: string
+          estimated_ready_date: string
+          farmer_id: string
+          id: string
+          notes: string | null
+          projected_yield_kg: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          crop_name: string
+          estimated_ready_date: string
+          farmer_id: string
+          id?: string
+          notes?: string | null
+          projected_yield_kg?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          crop_name?: string
+          estimated_ready_date?: string
+          farmer_id?: string
+          id?: string
+          notes?: string | null
+          projected_yield_kg?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       interactions: {
         Row: {
           created_at: string
