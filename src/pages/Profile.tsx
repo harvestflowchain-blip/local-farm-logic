@@ -115,7 +115,7 @@ const Profile = () => {
   const isAdmin = role === 'admin';
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-20 overflow-x-hidden">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center gap-3 px-4 py-4">
           <button onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></button>
@@ -123,7 +123,7 @@ const Profile = () => {
         </div>
       </header>
 
-      <main className="px-4 pt-6 space-y-6 max-w-lg mx-auto">
+      <main className="px-4 pt-6 space-y-6 max-w-lg mx-auto w-full">
         {/* Account info (read-only) */}
         <Card className="p-4 space-y-1">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

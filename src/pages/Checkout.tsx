@@ -266,14 +266,14 @@ const Checkout = () => {
   // Upgrade flow UI
   if (isUpgradeFlow) {
     return (
-      <div className="min-h-screen pb-24">
+      <div className="min-h-screen pb-24 overflow-x-hidden">
         <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
           <div className="flex items-center gap-3 px-4 py-4">
             <button onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></button>
             <h1 className="text-xl font-bold tracking-tight">Checkout</h1>
           </div>
         </header>
-        <main className="px-4 pt-6 space-y-6 max-w-lg mx-auto">
+        <main className="px-4 pt-6 space-y-6 max-w-lg mx-auto w-full">
           <Card className="p-5 space-y-4">
             <div className="flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-muted-foreground" />
