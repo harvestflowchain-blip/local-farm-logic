@@ -6,6 +6,7 @@ import type { Tables } from '@/integrations/supabase/types';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Link } from 'react-router-dom';
 
 const Index = () => {
   const [products, setProducts] = useState<Tables<'products'>[]>([]);
