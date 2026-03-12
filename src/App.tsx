@@ -19,6 +19,7 @@ import FarmerOnboarding from "./pages/FarmerOnboarding";
 import ConsumerOnboarding from "./pages/ConsumerOnboarding";
 import Calendar from "./pages/Calendar";
 import AdminDashboard from "./pages/AdminDashboard";
+import HarvestPlannerPage from "./pages/HarvestPlannerPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,7 @@ const AppRoutes = () => (
       <Route path="/onboarding/farmer" element={<FarmerOnboarding />} />
       <Route path="/onboarding/consumer" element={<ConsumerOnboarding />} />
       <Route path="/calendar" element={<Calendar />} />
+      <Route path="/harvest-planner" element={<HarvestPlannerPage />} />
       <Route path="/settings" element={<Navigate to="/profile" replace />} />
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/admin/requests" element={<AdminDashboard />} />

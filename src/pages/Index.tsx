@@ -6,6 +6,7 @@ import type { Tables } from '@/integrations/supabase/types';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Link } from 'react-router-dom';
 
 const Index = () => {
   const [products, setProducts] = useState<Tables<'products'>[]>([]);
@@ -30,7 +31,10 @@ const Index = () => {
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center justify-between px-4 py-4">
           <h1 className="text-xl font-bold tracking-tight">HarvestFlow</h1>
-          <span className="text-xs text-muted-foreground uppercase tracking-widest">Helderberg</span>
+          <div className="flex items-center gap-3">
+            <Link to="/harvest-planner" className="text-xs font-medium text-foreground hover:underline">Planner</Link>
+            <span className="text-xs text-muted-foreground uppercase tracking-widest">Helderberg</span>
+          </div>
         </div>
       </header>
 

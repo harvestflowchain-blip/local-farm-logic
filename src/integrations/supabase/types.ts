@@ -115,8 +115,10 @@ export type Database = {
           crop_name: string
           estimated_ready_date: string
           farmer_id: string
+          harvest_date: string | null
           id: string
           notes: string | null
+          planting_date: string | null
           projected_yield_kg: number
           updated_at: string
         }
@@ -125,8 +127,10 @@ export type Database = {
           crop_name: string
           estimated_ready_date: string
           farmer_id: string
+          harvest_date?: string | null
           id?: string
           notes?: string | null
+          planting_date?: string | null
           projected_yield_kg?: number
           updated_at?: string
         }
@@ -135,8 +139,10 @@ export type Database = {
           crop_name?: string
           estimated_ready_date?: string
           farmer_id?: string
+          harvest_date?: string | null
           id?: string
           notes?: string | null
+          planting_date?: string | null
           projected_yield_kg?: number
           updated_at?: string
         }
