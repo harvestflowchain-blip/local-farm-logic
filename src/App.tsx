@@ -19,6 +19,7 @@ import FarmerOnboarding from "./pages/FarmerOnboarding";
 import ConsumerOnboarding from "./pages/ConsumerOnboarding";
 import Calendar from "./pages/Calendar";
 import AdminDashboard from "./pages/AdminDashboard";
+import HarvestPlannerPage from "./pages/HarvestPlannerPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
