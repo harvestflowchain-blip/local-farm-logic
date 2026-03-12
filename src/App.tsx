@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { RoleGuard } from "@/components/RoleGuard";
 import BottomNav from "@/components/BottomNav";
 import ChatBot from "@/components/ChatBot";
 import Index from "./pages/Index";
@@ -20,6 +21,7 @@ import ConsumerOnboarding from "./pages/ConsumerOnboarding";
 import Calendar from "./pages/Calendar";
 import AdminDashboard from "./pages/AdminDashboard";
 import HarvestPlannerPage from "./pages/HarvestPlannerPage";
+import AccessError from "./pages/AccessError";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +31,7 @@ const ONBOARDING_ALLOWED_ROUTES = [
   '/onboarding/consumer',
   '/auth',
   '/pricing',
+  '/access-error',
 ];
 
 function OnboardingGuard({ children }: { children: React.ReactNode }) {
@@ -52,20 +55,37 @@ const AppRoutes = () => (
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
+      <Route path="/access-error" element={<AccessError />} />
       <Route path="/product/:id" element={<ProductDetail />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/orders" element={<Orders />} />
       <Route path="/pricing" element={<Pricing />} />
-      <Route path="/dashboard" element={<FarmerDashboard />} />
+      <Route path="/dashboard" element={
+        <RoleGuard allowed={['farmer', 'admin']}>
+          <FarmerDashboard />
+        </RoleGuard>
+      } />
       <Route path="/onboarding/farmer" element={<FarmerOnboarding />} />
       <Route path="/onboarding/consumer" element={<ConsumerOnboarding />} />
       <Route path="/calendar" element={<Calendar />} />
-      <Route path="/harvest-planner" element={<HarvestPlannerPage />} />
+      <Route path="/harvest-planner" element={
+        <RoleGuard allowed={['farmer', 'admin']}>
+          <HarvestPlannerPage />
+        </RoleGuard>
+      } />
       <Route path="/settings" element={<Navigate to="/profile" replace />} />
-      <Route path="/admin" element={<AdminDashboard />} />
-      <Route path="/admin/requests" element={<AdminDashboard />} />
+      <Route path="/admin" element={
+        <RoleGuard allowed={['admin']}>
+          <AdminDashboard />
+        </RoleGuard>
+      } />
+      <Route path="/admin/requests" element={
+        <RoleGuard allowed={['admin']}>
+          <AdminDashboard />
+        </RoleGuard>
+      } />
       <Route path="*" element={<NotFound />} />
     </Routes>
   </OnboardingGuard>
