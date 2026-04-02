@@ -76,11 +76,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (error) throw error;
     if (data.user) {
-      // Trigger assigns 'customer' by default; upsert to set the chosen role
-      const { error: roleError } = await supabase.from('user_roles').upsert(
-        { user_id: data.user.id, role },
-        { onConflict: 'user_id' }
-      );
+      // Use secure DB function to set the chosen role (trigger defaults to 'customer')
+      const { error: roleError } = await supabase.rpc('set_signup_role', {
+        _user_id: data.user.id,
+        _role: role,
+      });
       if (roleError) throw roleError;
       const { error: profileError } = await supabase.from('profiles').update({ full_name: fullName, suburb, phone }).eq('user_id', data.user.id);
       if (profileError) throw profileError;
