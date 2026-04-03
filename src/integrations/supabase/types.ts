@@ -428,27 +428,7 @@ export type Database = {
       }
     }
     Views: {
-      farmer_customer_view: {
-        Row: {
-          full_name: string | null
-          order_count: number | null
-          suburb: string | null
-          user_id: string | null
-        }
-        Insert: {
-          full_name?: string | null
-          order_count?: never
-          suburb?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          full_name?: string | null
-          order_count?: never
-          suburb?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       get_farmer_customers: {

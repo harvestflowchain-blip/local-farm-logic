@@ -1,0 +1,1 @@
+DROP VIEW IF EXISTS public.farmer_customer_view;
