@@ -39,16 +39,15 @@ serve(async (req) => {
 
     // Get access token
     const auth = btoa(`${clientId}:${clientSecret}`);
-    console.log("PayPal auth - clientId length:", clientId.length, "prefix:", clientId.substring(0, 6));
-    const tokenResp = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
+    const tokenResp = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
       method: "POST",
       headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" },
       body: "grant_type=client_credentials",
     });
     const tokenText = await tokenResp.text();
-    console.log("PayPal token response status:", tokenResp.status, "body:", tokenText);
     if (!tokenResp.ok) {
-      return new Response(JSON.stringify({ error: "PayPal auth failed", detail: tokenText }), {
+      console.error("PayPal auth failed:", tokenResp.status, tokenText);
+      return new Response(JSON.stringify({ error: "PayPal auth failed" }), {
         status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -56,7 +55,7 @@ serve(async (req) => {
     const accessToken = tokenData.access_token;
 
     // Create order
-    const orderResp = await fetch("https://api-m.sandbox.paypal.com/v2/checkout/orders", {
+    const orderResp = await fetch("https://api-m.paypal.com/v2/checkout/orders", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,

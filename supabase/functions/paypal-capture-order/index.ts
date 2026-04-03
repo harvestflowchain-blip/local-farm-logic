@@ -64,7 +64,7 @@ serve(async (req) => {
     });
     const tokenData = await tokenResp.json();
 
-    const captureResp = await fetch(`https://api-m.sandbox.paypal.com/v2/checkout/orders/${orderId}/capture`, {
+    const captureResp = await fetch(`https://api-m.paypal.com/v2/checkout/orders/${orderId}/capture`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${tokenData.access_token}`,

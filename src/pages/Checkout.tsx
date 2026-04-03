@@ -140,7 +140,7 @@ const Checkout = () => {
       });
       if (createErr || !orderData?.id) throw new Error(createErr?.message || 'Failed to create order');
 
-      const approvalUrl = `https://www.sandbox.paypal.com/checkoutnow?token=${orderData.id}`;
+      const approvalUrl = `https://www.paypal.com/checkoutnow?token=${orderData.id}`;
       window.open(approvalUrl, 'paypal', 'width=500,height=700');
 
       toast({ title: 'PayPal', description: 'Complete payment in the PayPal window. Once done, click "Confirm Payment" below.' });
