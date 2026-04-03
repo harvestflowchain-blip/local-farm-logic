@@ -428,9 +428,38 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      farmer_customer_view: {
+        Row: {
+          full_name: string | null
+          order_count: number | null
+          suburb: string | null
+          user_id: string | null
+        }
+        Insert: {
+          full_name?: string | null
+          order_count?: never
+          suburb?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          full_name?: string | null
+          order_count?: never
+          suburb?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      get_farmer_customers: {
+        Args: { _farmer_id: string }
+        Returns: {
+          full_name: string
+          order_count: number
+          suburb: string
+          user_id: string
+        }[]
+      }
       get_my_role: { Args: never; Returns: string }
       has_role: {
         Args: {
