@@ -290,7 +290,7 @@ const Checkout = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Amount</span>
-                <span className="font-bold text-base">R{getUpgradePrice(upgradePlan!, upgradePeriod)}{PERIOD_LABELS[upgradePeriod] || ''}</span>
+                <span className="font-bold text-base">${getUpgradePrice(upgradePlan!, upgradePeriod).toFixed(2)}{PERIOD_LABELS[upgradePeriod] || ''}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Payment</span>

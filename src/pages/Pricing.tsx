@@ -98,7 +98,7 @@ const Pricing = () => {
             <div className="space-y-1">
               <h3 className="text-lg font-bold tracking-tight">{plan.name}</h3>
               <div className="flex items-baseline gap-0.5">
-                <span className="text-2xl font-bold">R{price}</span>
+                <span className="text-2xl font-bold">${price.toFixed(2)}</span>
                 <span className="text-sm text-muted-foreground">{PERIOD_LABELS[period]}</span>
               </div>
               {period !== 'monthly' && plan.monthlyPrice > 0 && (
