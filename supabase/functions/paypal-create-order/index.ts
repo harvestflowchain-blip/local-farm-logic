@@ -5,14 +5,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Server-side price table — NEVER trust client
+// Server-side price table in USD (converted from ZAR at ~18 ZAR/USD)
 const PRICES: Record<string, Record<string, number>> = {
-  // Consumer plans (ZAR)
-  plus:   { monthly: 49, quarterly: 132, yearly: 470 },
-  family: { monthly: 99, quarterly: 267, yearly: 950 },
-  // Farmer plans (ZAR)
-  growth: { monthly: 149, quarterly: 402, yearly: 1430 },
-  pro:    { monthly: 349, quarterly: 942, yearly: 3350 },
+  // Consumer plans
+  plus:   { monthly: 2.99, quarterly: 7.99, yearly: 27.99 },
+  family: { monthly: 5.99, quarterly: 15.99, yearly: 56.99 },
+  // Farmer plans
+  growth: { monthly: 8.99, quarterly: 23.99, yearly: 84.99 },
+  pro:    { monthly: 20.99, quarterly: 56.99, yearly: 199.99 },
 };
 
 serve(async (req) => {
@@ -39,16 +39,15 @@ serve(async (req) => {
 
     // Get access token
     const auth = btoa(`${clientId}:${clientSecret}`);
-    console.log("PayPal auth - clientId length:", clientId.length, "prefix:", clientId.substring(0, 6));
-    const tokenResp = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
+    const tokenResp = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
       method: "POST",
       headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" },
       body: "grant_type=client_credentials",
     });
     const tokenText = await tokenResp.text();
-    console.log("PayPal token response status:", tokenResp.status, "body:", tokenText);
     if (!tokenResp.ok) {
-      return new Response(JSON.stringify({ error: "PayPal auth failed", detail: tokenText }), {
+      console.error("PayPal auth failed:", tokenResp.status, tokenText);
+      return new Response(JSON.stringify({ error: "PayPal auth failed" }), {
         status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -56,7 +55,7 @@ serve(async (req) => {
     const accessToken = tokenData.access_token;
 
     // Create order
-    const orderResp = await fetch("https://api-m.sandbox.paypal.com/v2/checkout/orders", {
+    const orderResp = await fetch("https://api-m.paypal.com/v2/checkout/orders", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -65,7 +64,7 @@ serve(async (req) => {
       body: JSON.stringify({
         intent: "CAPTURE",
         purchase_units: [{
-          amount: { currency_code: "ZAR", value: amount.toFixed(2) },
+          amount: { currency_code: "USD", value: amount.toFixed(2) },
           description: `HarvestFlow ${plan} plan - ${period}`,
         }],
       }),

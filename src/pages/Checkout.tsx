@@ -23,7 +23,7 @@ const PLAN_LABELS: Record<string, string> = {
 };
 
 const PLAN_MONTHLY_PRICES: Record<string, number> = {
-  plus: 49, family: 99, growth: 149, pro: 349,
+  plus: 2.99, family: 5.99, growth: 8.99, pro: 20.99,
 };
 
 const PERIOD_MULTIPLIER: Record<string, number> = { monthly: 1, quarterly: 2.7, yearly: 9.6 };
@@ -140,7 +140,7 @@ const Checkout = () => {
       });
       if (createErr || !orderData?.id) throw new Error(createErr?.message || 'Failed to create order');
 
-      const approvalUrl = `https://www.sandbox.paypal.com/checkoutnow?token=${orderData.id}`;
+      const approvalUrl = `https://www.paypal.com/checkoutnow?token=${orderData.id}`;
       window.open(approvalUrl, 'paypal', 'width=500,height=700');
 
       toast({ title: 'PayPal', description: 'Complete payment in the PayPal window. Once done, click "Confirm Payment" below.' });
@@ -290,11 +290,11 @@ const Checkout = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Amount</span>
-                <span className="font-bold text-base">R{getUpgradePrice(upgradePlan!, upgradePeriod)}{PERIOD_LABELS[upgradePeriod] || ''}</span>
+                <span className="font-bold text-base">${getUpgradePrice(upgradePlan!, upgradePeriod).toFixed(2)}{PERIOD_LABELS[upgradePeriod] || ''}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Payment</span>
-                <span className="font-medium">PayPal (Sandbox)</span>
+                <span className="font-medium">PayPal</span>
               </div>
             </div>
           </Card>

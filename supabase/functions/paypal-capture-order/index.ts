@@ -57,14 +57,14 @@ serve(async (req) => {
     }
 
     const auth = btoa(`${clientId}:${clientSecret}`);
-    const tokenResp = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
+    const tokenResp = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
       method: "POST",
       headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" },
       body: "grant_type=client_credentials",
     });
     const tokenData = await tokenResp.json();
 
-    const captureResp = await fetch(`https://api-m.sandbox.paypal.com/v2/checkout/orders/${orderId}/capture`, {
+    const captureResp = await fetch(`https://api-m.paypal.com/v2/checkout/orders/${orderId}/capture`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${tokenData.access_token}`,

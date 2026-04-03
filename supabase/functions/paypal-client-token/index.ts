@@ -28,7 +28,7 @@ serve(async (req) => {
     }
 
     const auth = btoa(`${clientId}:${clientSecret}`);
-    const resp = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
+    const resp = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
       method: "POST",
       headers: {
         Authorization: `Basic ${auth}`,

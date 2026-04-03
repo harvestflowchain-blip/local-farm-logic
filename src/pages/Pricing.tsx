@@ -29,14 +29,14 @@ interface PlanDef {
 
 const CONSUMER_PLANS: PlanDef[] = [
   { name: 'Free', monthlyPrice: 0, planId: 'free', features: ['Browse all products', 'Basic search & filters', 'Order from local farms', 'Chat support'], cta: 'Current Plan', current: true },
-  { name: 'Plus', monthlyPrice: 49, planId: 'plus', badge: 'Popular', features: ['Everything in Free', 'AI-powered recommendations', 'Priority delivery slots', 'Order history analytics', 'Exclusive deals & early access'], cta: 'Upgrade to Plus' },
-  { name: 'Family', monthlyPrice: 99, planId: 'family', features: ['Everything in Plus', 'Family sharing (up to 5)', 'Weekly box subscriptions', 'Free delivery on orders over R200', 'Calendar integration'], cta: 'Upgrade to Family' },
+  { name: 'Plus', monthlyPrice: 2.99, planId: 'plus', badge: 'Popular', features: ['Everything in Free', 'AI-powered recommendations', 'Priority delivery slots', 'Order history analytics', 'Exclusive deals & early access'], cta: 'Upgrade to Plus' },
+  { name: 'Family', monthlyPrice: 5.99, planId: 'family', features: ['Everything in Plus', 'Family sharing (up to 5)', 'Weekly box subscriptions', 'Free delivery on orders over R200', 'Calendar integration'], cta: 'Upgrade to Family' },
 ];
 
 const FARMER_PLANS: PlanDef[] = [
   { name: 'Starter', monthlyPrice: 0, planId: 'free', features: ['List up to 10 products', 'Basic order management', 'Customer messaging', 'Standard visibility'], cta: 'Current Plan', current: true },
-  { name: 'Growth', monthlyPrice: 149, planId: 'growth', badge: 'Popular', features: ['Unlimited product listings', 'Advanced analytics dashboard', 'Priority placement in search', 'Bulk inventory management', 'Calendar & delivery scheduling'], cta: 'Upgrade to Growth' },
-  { name: 'Pro', monthlyPrice: 349, planId: 'pro', features: ['Everything in Growth', 'White-label storefront', 'API access', 'Dedicated account manager', 'Custom delivery zones'], cta: 'Upgrade to Pro' },
+  { name: 'Growth', monthlyPrice: 8.99, planId: 'growth', badge: 'Popular', features: ['Unlimited product listings', 'Advanced analytics dashboard', 'Priority placement in search', 'Bulk inventory management', 'Calendar & delivery scheduling'], cta: 'Upgrade to Growth' },
+  { name: 'Pro', monthlyPrice: 20.99, planId: 'pro', features: ['Everything in Growth', 'White-label storefront', 'API access', 'Dedicated account manager', 'Custom delivery zones'], cta: 'Upgrade to Pro' },
 ];
 
 const Pricing = () => {
@@ -98,7 +98,7 @@ const Pricing = () => {
             <div className="space-y-1">
               <h3 className="text-lg font-bold tracking-tight">{plan.name}</h3>
               <div className="flex items-baseline gap-0.5">
-                <span className="text-2xl font-bold">R{price}</span>
+                <span className="text-2xl font-bold">${price.toFixed(2)}</span>
                 <span className="text-sm text-muted-foreground">{PERIOD_LABELS[period]}</span>
               </div>
               {period !== 'monthly' && plan.monthlyPrice > 0 && (
@@ -123,7 +123,7 @@ const Pricing = () => {
               {plan.cta}
             </Button>
             {!plan.current && (
-              <p className="text-xs text-center text-muted-foreground">Pay with PayPal · Sandbox</p>
+              <p className="text-xs text-center text-muted-foreground">Pay with PayPal</p>
             )}
           </Card>
         );
