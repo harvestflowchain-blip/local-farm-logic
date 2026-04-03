@@ -57,7 +57,7 @@ serve(async (req) => {
     }
 
     const auth = btoa(`${clientId}:${clientSecret}`);
-    const tokenResp = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
+    const tokenResp = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
       method: "POST",
       headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" },
       body: "grant_type=client_credentials",
