@@ -294,7 +294,7 @@ const Checkout = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Payment</span>
-                <span className="font-medium">PayPal (Sandbox)</span>
+                <span className="font-medium">PayPal</span>
               </div>
             </div>
           </Card>

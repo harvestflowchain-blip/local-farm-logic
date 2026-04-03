@@ -123,7 +123,7 @@ const Pricing = () => {
               {plan.cta}
             </Button>
             {!plan.current && (
-              <p className="text-xs text-center text-muted-foreground">Pay with PayPal · Sandbox</p>
+              <p className="text-xs text-center text-muted-foreground">Pay with PayPal</p>
             )}
           </Card>
         );
