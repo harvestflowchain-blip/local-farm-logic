@@ -64,7 +64,7 @@ serve(async (req) => {
       body: JSON.stringify({
         intent: "CAPTURE",
         purchase_units: [{
-          amount: { currency_code: "ZAR", value: amount.toFixed(2) },
+          amount: { currency_code: "USD", value: amount.toFixed(2) },
           description: `HarvestFlow ${plan} plan - ${period}`,
         }],
       }),
