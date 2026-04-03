@@ -20,12 +20,9 @@ const OrderList = () => {
 
     if (!data) { setLoading(false); return; }
 
-    // Fetch customer profiles
-    const customerIds = [...new Set(data.map((o) => o.customer_id))];
+    // Fetch customer profiles via restricted RPC (no phone/address exposed)
     const { data: profiles } = await supabase
-      .from('profiles')
-      .select('user_id, full_name, suburb')
-      .in('user_id', customerIds);
+      .rpc('get_farmer_customers', { _farmer_id: user.id });
 
     const profileMap: Record<string, { full_name: string; suburb: string | null }> = {};
     (profiles || []).forEach((p) => { profileMap[p.user_id] = p; });

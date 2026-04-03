@@ -431,6 +431,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_farmer_customers: {
+        Args: { _farmer_id: string }
+        Returns: {
+          full_name: string
+          order_count: number
+          suburb: string
+          user_id: string
+        }[]
+      }
       get_my_role: { Args: never; Returns: string }
       has_role: {
         Args: {
