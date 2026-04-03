@@ -39,12 +39,20 @@ serve(async (req) => {
 
     // Get access token
     const auth = btoa(`${clientId}:${clientSecret}`);
+    console.log("PayPal auth - clientId length:", clientId.length, "prefix:", clientId.substring(0, 6));
     const tokenResp = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
       method: "POST",
       headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" },
       body: "grant_type=client_credentials",
     });
-    const tokenData = await tokenResp.json();
+    const tokenText = await tokenResp.text();
+    console.log("PayPal token response status:", tokenResp.status, "body:", tokenText);
+    if (!tokenResp.ok) {
+      return new Response(JSON.stringify({ error: "PayPal auth failed", detail: tokenText }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const tokenData = JSON.parse(tokenText);
     const accessToken = tokenData.access_token;
 
     // Create order
