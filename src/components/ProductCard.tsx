@@ -46,7 +46,7 @@ const ProductCard = ({ product, isOwner, onDelete }: ProductCardProps) => {
             )}
           </div>
           <div className="py-3 space-y-1">
-            <h3 className="font-medium text-sm tracking-tight leading-tight">{product.name}</h3>
+            <h3 className="font-medium text-sm tracking-tight leading-tight line-clamp-2">{product.name}</h3>
             <p className="text-sm font-semibold">R{Number(product.price).toFixed(2)}</p>
             {product.category && (
               <p className="text-xs text-muted-foreground uppercase tracking-widest">{product.category}</p>
