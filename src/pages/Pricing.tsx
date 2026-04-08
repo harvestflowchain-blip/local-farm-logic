@@ -17,9 +17,26 @@ type BillingPeriod = 'monthly' | 'quarterly' | 'yearly';
 const PERIOD_LABELS: Record<BillingPeriod, string> = { monthly: '/month', quarterly: '/quarter', yearly: '/year' };
 const PERIOD_MULTIPLIER: Record<BillingPeriod, number> = { monthly: 1, quarterly: 2.7, yearly: 9.6 };
 
-function calcPrice(monthlyPrice: number, period: BillingPeriod): number {
-  if (monthlyPrice === 0) return 0;
-  return Math.round(monthlyPrice * PERIOD_MULTIPLIER[period]);
+// ZAR prices (display currency) — monthly base prices
+const ZAR_MONTHLY: Record<string, number> = {
+  plus: 49, family: 99, growth: 149, pro: 349,
+};
+
+// USD prices (PayPal charge currency) — monthly base prices
+const USD_MONTHLY: Record<string, number> = {
+  plus: 2.99, family: 5.99, growth: 8.99, pro: 20.99,
+};
+
+function calcZarPrice(planId: string, period: BillingPeriod): number {
+  const monthly = ZAR_MONTHLY[planId] || 0;
+  if (monthly === 0) return 0;
+  return Math.round(monthly * PERIOD_MULTIPLIER[period]);
+}
+
+function calcUsdPrice(planId: string, period: BillingPeriod): number {
+  const monthly = USD_MONTHLY[planId] || 0;
+  if (monthly === 0) return 0;
+  return Math.round(monthly * PERIOD_MULTIPLIER[period] * 100) / 100;
 }
 
 interface PlanDef {
@@ -87,7 +104,8 @@ const Pricing = () => {
   const renderPlans = (plans: PlanDef[]) => (
     <div className="space-y-4">
       {plans.map((plan) => {
-        const price = calcPrice(plan.monthlyPrice, period);
+        const zarPrice = calcZarPrice(plan.planId, period);
+        const usdPrice = calcUsdPrice(plan.planId, period);
         return (
           <Card key={plan.name} className="p-5 space-y-4 relative overflow-hidden">
             {plan.badge && (
@@ -98,9 +116,14 @@ const Pricing = () => {
             <div className="space-y-1">
               <h3 className="text-lg font-bold tracking-tight">{plan.name}</h3>
               <div className="flex items-baseline gap-0.5">
-                <span className="text-2xl font-bold">${price.toFixed(2)}</span>
+                <span className="text-2xl font-bold">R{zarPrice}</span>
                 <span className="text-sm text-muted-foreground">{PERIOD_LABELS[period]}</span>
               </div>
+              {plan.monthlyPrice > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Charged as ~${usdPrice.toFixed(2)} USD via PayPal
+                </p>
+              )}
               {period !== 'monthly' && plan.monthlyPrice > 0 && (
                 <p className="text-xs text-muted-foreground">
                   Save {period === 'quarterly' ? '10%' : '20%'} vs monthly
