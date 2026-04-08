@@ -22,17 +22,25 @@ const PLAN_LABELS: Record<string, string> = {
   plus: 'Plus', family: 'Family', growth: 'Growth', pro: 'Pro',
 };
 
-const PLAN_MONTHLY_PRICES: Record<string, number> = {
+const PLAN_MONTHLY_PRICES_USD: Record<string, number> = {
   plus: 2.99, family: 5.99, growth: 8.99, pro: 20.99,
+};
+
+const PLAN_MONTHLY_PRICES_ZAR: Record<string, number> = {
+  plus: 49, family: 99, growth: 149, pro: 349,
 };
 
 const PERIOD_MULTIPLIER: Record<string, number> = { monthly: 1, quarterly: 2.7, yearly: 9.6 };
 const PERIOD_LABELS: Record<string, string> = { monthly: '/month', quarterly: '/quarter', yearly: '/year' };
 
-function getUpgradePrice(plan: string, period: string): number {
-  const monthly = PLAN_MONTHLY_PRICES[plan] || 0;
-  const mult = PERIOD_MULTIPLIER[period] || 1;
-  return Math.round(monthly * mult);
+function getUpgradeZar(plan: string, period: string): number {
+  const monthly = PLAN_MONTHLY_PRICES_ZAR[plan] || 0;
+  return Math.round(monthly * (PERIOD_MULTIPLIER[period] || 1));
+}
+
+function getUpgradeUsd(plan: string, period: string): number {
+  const monthly = PLAN_MONTHLY_PRICES_USD[plan] || 0;
+  return Math.round(monthly * (PERIOD_MULTIPLIER[period] || 1) * 100) / 100;
 }
 
 const Checkout = () => {
@@ -289,9 +297,12 @@ const Checkout = () => {
                 <span className="font-medium capitalize">{upgradePeriod}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Amount</span>
-                <span className="font-bold text-base">${getUpgradePrice(upgradePlan!, upgradePeriod).toFixed(2)}{PERIOD_LABELS[upgradePeriod] || ''}</span>
+                <span className="text-muted-foreground">Amount (ZAR)</span>
+                <span className="font-bold text-base">R{getUpgradeZar(upgradePlan!, upgradePeriod)}{PERIOD_LABELS[upgradePeriod] || ''}</span>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Charged as ~${getUpgradeUsd(upgradePlan!, upgradePeriod).toFixed(2)} USD via PayPal · final amount subject to PayPal's daily conversion rate
+              </p>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Payment</span>
                 <span className="font-medium">PayPal</span>
