@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import Seo from '@/components/Seo';
 import type { Tables } from '@/integrations/supabase/types';
 
 const ProductDetail = () => {
