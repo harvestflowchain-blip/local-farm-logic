@@ -1,0 +1,16 @@
+# HarvestFlow
+
+> Fresh from the Helderberg's farms, straight to your door. Buy direct from local growers — always traceable, always in season.
+
+HarvestFlow is a local produce marketplace connecting Helderberg-region farmers (Somerset West, Strand, Gordon's Bay, Stellenbosch, Paarl) directly with nearby customers. Farmers list seasonal harvests; customers order with delivery or pickup.
+
+## Pages
+
+- [Home](/): Browse fresh produce from local farms.
+- [Pricing](/pricing): Subscription plans for farmers and customers.
+- [Sign in](/auth): Create an account or log in.
+
+## Optional
+
+- [Cart](/cart): Review items before checkout.
+- [Orders](/orders): Track your past and current orders.
