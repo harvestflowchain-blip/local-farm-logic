@@ -53,8 +53,31 @@ const ProductDetail = () => {
   if (loading) return <div className="flex min-h-screen items-center justify-center"><span className="text-muted-foreground">Loading...</span></div>;
   if (!product) return <div className="flex min-h-screen items-center justify-center"><span>Product not found</span></div>;
 
+  const seoDesc = (product.description || `Fresh ${product.name} from a local Helderberg farm. R${Number(product.price).toFixed(2)}.`).slice(0, 160);
+  const productLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: seoDesc,
+    image: product.image_url || undefined,
+    offers: {
+      '@type': 'Offer',
+      price: Number(product.price).toFixed(2),
+      priceCurrency: 'ZAR',
+      availability: product.stock_quantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    },
+  };
+
   return (
     <div className="min-h-screen pb-20">
+      <Seo
+        title={`${product.name} — HarvestFlow`}
+        description={seoDesc}
+        path={`/product/${product.id}`}
+        ogType="product"
+        image={product.image_url || undefined}
+        jsonLd={productLd}
+      />
       <button onClick={() => navigate(-1)} className="fixed top-4 left-4 z-50 p-2 bg-background/80 backdrop-blur rounded-full">
         <ArrowLeft className="h-5 w-5" />
       </button>
