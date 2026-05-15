@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
+import Seo from '@/components/Seo';
 
 const Index = () => {
   const { user, role } = useAuth();
@@ -71,6 +72,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pb-20">
+      <Seo
+        title="HarvestFlow — Fresh Helderberg produce, direct from local farms"
+        description="Browse seasonal produce from Helderberg growers in Somerset West, Strand and Stellenbosch. Order direct, always traceable, always in season."
+        path="/"
+      />
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center justify-between px-4 py-4">
           <h1 className="text-xl font-bold tracking-tight">HarvestFlow</h1>
