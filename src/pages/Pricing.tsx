@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Check, Sparkles, Loader2, MessageSquarePlus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import Seo from '@/components/Seo';
 
 type BillingPeriod = 'monthly' | 'quarterly' | 'yearly';
 
@@ -156,6 +157,11 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen pb-20 overflow-x-hidden">
+      <Seo
+        title="Pricing — HarvestFlow plans for farmers and shoppers"
+        description="Compare HarvestFlow plans: family bundles, growth tools for farmers, and pro features. Monthly, quarterly and yearly billing in ZAR."
+        path="/pricing"
+      />
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center gap-3 px-4 py-4">
           <button onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></button>
