@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { HELDERBERG_SUBURBS } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import Seo from '@/components/Seo';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
