@@ -1,16 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Server-side price table in USD (converted from ZAR at ~18 ZAR/USD)
+// Server-side price table in USD
 const PRICES: Record<string, Record<string, number>> = {
-  // Consumer plans
   plus:   { monthly: 2.99, quarterly: 7.99, yearly: 27.99 },
   family: { monthly: 5.99, quarterly: 15.99, yearly: 56.99 },
-  // Farmer plans
   growth: { monthly: 8.99, quarterly: 23.99, yearly: 84.99 },
   pro:    { monthly: 20.99, quarterly: 56.99, yearly: 199.99 },
 };
@@ -19,6 +18,25 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Require auth
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { plan, period } = await req.json();
 
     const planPrices = PRICES[plan];
@@ -37,7 +55,6 @@ serve(async (req) => {
       });
     }
 
-    // Get access token
     const auth = btoa(`${clientId}:${clientSecret}`);
     const tokenResp = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
       method: "POST",
@@ -54,7 +71,6 @@ serve(async (req) => {
     const tokenData = JSON.parse(tokenText);
     const accessToken = tokenData.access_token;
 
-    // Create order
     const orderResp = await fetch("https://api-m.paypal.com/v2/checkout/orders", {
       method: "POST",
       headers: {
@@ -79,6 +95,28 @@ serve(async (req) => {
     }
 
     const orderData = await orderResp.json();
+
+    // Record server-side mapping so capture cannot be tricked into wrong plan/period
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    const { error: insertError } = await adminClient
+      .from("pending_subscription_orders")
+      .insert({
+        paypal_order_id: orderData.id,
+        user_id: user.id,
+        plan,
+        period,
+        amount,
+      });
+    if (insertError) {
+      console.error("Failed to record pending order:", insertError);
+      return new Response(JSON.stringify({ error: "Failed to record order" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ id: orderData.id, amount, plan, period }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
