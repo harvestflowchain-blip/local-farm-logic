@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Package, ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Tables } from '@/integrations/supabase/types';
+import Seo from '@/components/Seo';
 
 interface OrderItem {
   id: string;
