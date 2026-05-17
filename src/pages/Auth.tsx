@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { HELDERBERG_SUBURBS } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import Seo from '@/components/Seo';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -54,6 +55,11 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 pb-20">
+      <Seo
+        title={isSignUp ? 'Sign up — HarvestFlow' : 'Sign in — HarvestFlow'}
+        description="Sign in or create a HarvestFlow account to order fresh Helderberg produce or list your farm's harvest."
+        path="/auth"
+      />
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">HarvestFlow</h1>

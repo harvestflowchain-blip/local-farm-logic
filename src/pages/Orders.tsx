@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Package, ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Tables } from '@/integrations/supabase/types';
+import Seo from '@/components/Seo';
 
 interface OrderItem {
   id: string;
@@ -88,6 +89,11 @@ const Orders = () => {
 
   return (
     <div className="min-h-screen pb-20">
+      <Seo
+        title="Your orders — HarvestFlow"
+        description="Track your past and current HarvestFlow orders from Helderberg farms."
+        path="/orders"
+      />
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center gap-3 px-4 py-4">
           <button onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></button>

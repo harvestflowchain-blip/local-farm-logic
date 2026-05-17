@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
 import { calculateDeliveryFee } from '@/lib/delivery';
 import DeliveryCalculator from '@/components/checkout/DeliveryCalculator';
+import Seo from '@/components/Seo';
 import OrderSummary, { type FarmerGroup } from '@/components/checkout/OrderSummary';
 import PaymentSelector from '@/components/checkout/PaymentSelector';
 import LogisticsSelector from '@/components/checkout/LogisticsSelector';
@@ -336,6 +337,11 @@ const Checkout = () => {
   // Standard cart checkout
   return (
     <div className="min-h-screen pb-24 overflow-x-hidden">
+      <Seo
+        title="Checkout — HarvestFlow"
+        description="Confirm delivery details and place your HarvestFlow order with secure PayPal checkout."
+        path="/checkout"
+      />
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center gap-3 px-4 py-4">
           <button onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></button>

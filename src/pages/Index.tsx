@@ -73,7 +73,7 @@ const Index = () => {
   return (
     <div className="min-h-screen pb-20">
       <Seo
-        title="HarvestFlow — Fresh Helderberg produce, direct from local farms"
+        title="HarvestFlow — Helderberg farm-to-door produce"
         description="Browse seasonal produce from Helderberg growers in Somerset West, Strand and Stellenbosch. Order direct, always traceable, always in season."
         path="/"
       />

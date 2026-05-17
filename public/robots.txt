@@ -1,8 +1,18 @@
 User-agent: Googlebot
 Allow: /
+Disallow: /access-error
+Disallow: /profile
+Disallow: /onboarding/
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /harvest-planner
 
 User-agent: Bingbot
 Allow: /
+Disallow: /access-error
+Disallow: /profile
+Disallow: /onboarding/
+Disallow: /admin
 
 User-agent: Twitterbot
 Allow: /
@@ -12,5 +22,11 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /access-error
+Disallow: /profile
+Disallow: /onboarding/
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /harvest-planner
 
 Sitemap: https://local-farm-logic.lovable.app/sitemap.xml
