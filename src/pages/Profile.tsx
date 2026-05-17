@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { HELDERBERG_SUBURBS } from '@/lib/constants';
 import { Loader2, ArrowLeft, Save, User, MapPin, Phone, Mail, Shield, Package, CreditCard, Calendar } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import Seo from '@/components/Seo';
 import { Skeleton } from '@/components/ui/skeleton';
 import LockedFeature from '@/components/LockedFeature';
 
