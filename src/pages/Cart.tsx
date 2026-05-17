@@ -43,6 +43,11 @@ const Cart = () => {
 
   return (
     <div className="min-h-screen pb-24">
+      <Seo
+        title="Your cart — HarvestFlow"
+        description="Review items in your HarvestFlow cart before checkout."
+        path="/cart"
+      />
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
         <div className="px-4 py-4">
           <h1 className="text-xl font-bold tracking-tight">Cart</h1>
