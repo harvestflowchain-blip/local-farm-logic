@@ -115,6 +115,11 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen pb-20 overflow-x-hidden">
+      <Seo
+        title="Profile & settings — HarvestFlow"
+        description="Manage your HarvestFlow profile, delivery suburb and account settings."
+        path="/profile"
+      />
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center gap-3 px-4 py-4">
           <button onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></button>
