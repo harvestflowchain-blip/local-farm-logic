@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
 import { calculateDeliveryFee } from '@/lib/delivery';
 import DeliveryCalculator from '@/components/checkout/DeliveryCalculator';
+import Seo from '@/components/Seo';
 import OrderSummary, { type FarmerGroup } from '@/components/checkout/OrderSummary';
 import PaymentSelector from '@/components/checkout/PaymentSelector';
 import LogisticsSelector from '@/components/checkout/LogisticsSelector';
