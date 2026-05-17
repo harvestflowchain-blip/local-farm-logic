@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Tables } from '@/integrations/supabase/types';
+import Seo from '@/components/Seo';
 
 type CartItemWithProduct = Tables<'cart_items'> & { products: Tables<'products'> };
 
