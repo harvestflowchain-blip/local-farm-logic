@@ -216,6 +216,12 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen pb-20">
+      <Seo
+        title="Admin Console | Local Farm Logic"
+        description="Internal admin tools for managing users, roles, announcements, and feature requests across the Local Farm Logic marketplace."
+        path="/admin"
+        noindex
+      />
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center gap-3 px-4 py-4">
           <button onClick={() => navigate('/')}><ArrowLeft className="h-5 w-5" /></button>
