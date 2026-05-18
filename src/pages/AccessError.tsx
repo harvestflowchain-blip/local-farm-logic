@@ -1,3 +1,4 @@
+import Seo from '@/components/Seo';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
