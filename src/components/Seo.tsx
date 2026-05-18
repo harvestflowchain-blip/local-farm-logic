@@ -9,9 +9,10 @@ interface SeoProps {
   ogType?: 'website' | 'product' | 'article';
   image?: string;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  noindex?: boolean;
 }
 
-const Seo = ({ title, description, path, ogType = 'website', image, jsonLd }: SeoProps) => {
+const Seo = ({ title, description, path, ogType = 'website', image, jsonLd, noindex }: SeoProps) => {
   const url = `${SITE}${path}`;
   const ldArray = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
   return (
@@ -19,6 +20,7 @@ const Seo = ({ title, description, path, ogType = 'website', image, jsonLd }: Se
       <title>{title}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={url} />
+      {noindex && <meta name="robots" content="noindex, nofollow" />}
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={url} />
