@@ -1,3 +1,4 @@
+import Seo from '@/components/Seo';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,6 +27,12 @@ const FarmerDashboard = () => {
 
   return (
     <div className="min-h-screen pb-20">
+      <Seo
+        title="Farmer Dashboard | Local Farm Logic"
+        description="Manage your farm operations: products, orders, harvest planning, and daily weather intelligence for Helderberg growers."
+        path="/dashboard"
+        noindex
+      />
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center justify-between px-4 py-3">
           <div>

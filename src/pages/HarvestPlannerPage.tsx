@@ -1,3 +1,4 @@
+import Seo from '@/components/Seo';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -213,6 +214,12 @@ const HarvestPlannerPage = () => {
 
   return (
     <div className="min-h-screen pb-20">
+      <Seo
+        title="Harvest Planner | Local Farm Logic"
+        description="Plan upcoming crops, projected yields, and harvest-ready dates to keep your farm's pipeline visible at a glance."
+        path="/harvest-planner"
+        noindex
+      />
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
         <div className="flex items-center justify-between px-4 py-4">
           <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">

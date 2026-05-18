@@ -1,3 +1,4 @@
+import Seo from '@/components/Seo';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -55,6 +56,12 @@ const ConsumerOnboarding = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 pb-20">
+      <Seo
+        title="Welcome | Local Farm Logic"
+        description="Tell us your suburb and produce preferences so we can connect you with nearby Helderberg farmers."
+        path="/onboarding/consumer"
+        noindex
+      />
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
           <div className="h-12 w-12 bg-primary text-primary-foreground flex items-center justify-center mx-auto">

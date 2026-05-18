@@ -1,3 +1,4 @@
+import Seo from '@/components/Seo';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +15,12 @@ const AccessError = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 text-center space-y-4">
+      <Seo
+        title="Access Issue | Local Farm Logic"
+        description="We couldn't determine your account role. Retry or sign out and back in to resolve the issue."
+        path="/access-error"
+        noindex
+      />
       <AlertTriangle className="h-10 w-10 text-destructive" />
       <h1 className="text-xl font-bold">Access Issue</h1>
       <p className="text-sm text-muted-foreground max-w-sm">
