@@ -7,12 +7,14 @@ import OrderList from '@/components/farmer/OrderList';
 import LockedFeature from '@/components/LockedFeature';
 import HarvestPlanner from '@/components/farmer/HarvestPlanner';
 import TodayOnFarm from '@/components/farmer/TodayOnFarm';
+import FarmTerminal, { RiskBadge, useFarmRiskScore } from '@/components/farmer/FarmTerminal';
 import { useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 
 const FarmerDashboard = () => {
   const { role, loading, profile } = useAuth();
   const navigate = useNavigate();
+  const riskScore = useFarmRiskScore();
 
   useEffect(() => {
     if (!loading && role !== 'farmer') navigate('/');
@@ -30,14 +32,19 @@ const FarmerDashboard = () => {
             <p className="text-sm text-muted-foreground">Good morning</p>
             <h1 className="text-xl font-bold tracking-tight">{farmerName}'s Farm</h1>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate('/calendar')}>
-            <Calendar className="h-4 w-4 mr-1" /> Schedule
-          </Button>
+          <div className="flex items-center gap-2">
+            <RiskBadge score={riskScore} />
+            <Button variant="outline" size="sm" onClick={() => navigate('/calendar')}>
+              <Calendar className="h-4 w-4 mr-1" /> Schedule
+            </Button>
+          </div>
         </div>
       </header>
 
       <main className="px-4 pt-4 space-y-6">
         <TodayOnFarm />
+        <FarmTerminal />
+
         <Tabs defaultValue="products">
           <TabsList className="w-full">
             <TabsTrigger value="products" className="flex-1">Products</TabsTrigger>
