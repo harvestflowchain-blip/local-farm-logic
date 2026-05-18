@@ -63,6 +63,12 @@ const FarmerOnboarding = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 pb-20">
+      <Seo
+        title="Farmer Onboarding | Local Farm Logic"
+        description="Set up your farm profile: farm name, location, operating days, and delivery preferences for the Helderberg marketplace."
+        path="/onboarding/farmer"
+        noindex
+      />
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
           <div className="h-12 w-12 bg-primary text-primary-foreground flex items-center justify-center mx-auto">
