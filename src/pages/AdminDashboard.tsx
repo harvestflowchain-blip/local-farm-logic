@@ -58,6 +58,7 @@ const AdminDashboard = () => {
   const [newTarget, setNewTarget] = useState('all');
   const [publishing, setPublishing] = useState(false);
   const [stats, setStats] = useState({ users: 0, farmers: 0, customers: 0, products: 0, orders: 0, harvestEntries: 0 });
+  const [tab, setTab] = useState('monitoring');
 
   const [requests, setRequests] = useState<FeatureRequest[]>([]);
   const [requestsLoading, setRequestsLoading] = useState(true);
