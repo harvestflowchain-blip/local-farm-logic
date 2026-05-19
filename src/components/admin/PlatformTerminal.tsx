@@ -33,14 +33,6 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <div className="text-xs uppercase tracking-widest mb-2" style={{ color: GOLD }}>{children}</div>
 );
 
-const Badge = ({ children, color }: { children: React.ReactNode; color: string }) => (
-  <span
-    className="text-xs font-bold px-3 py-1 rounded-full"
-    style={{ backgroundColor: `${color.replace(')', ' / 0.15)').replace('hsl(', 'hsl(')}`, color }}
-  >
-    {children}
-  </span>
-);
 
 export default function PlatformTerminal({ active, profileMap, onNavigateUsers }: Props) {
   const [loaded, setLoaded] = useState(false);
