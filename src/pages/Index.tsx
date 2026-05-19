@@ -92,6 +92,8 @@ const Index = () => {
 
       <RecommendedProducts />
 
+      <MarketPulse />
+
       <main className="px-2 pt-4">
         {loading ? (
           <div className="columns-2 gap-2 space-y-2">
