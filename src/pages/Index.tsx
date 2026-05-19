@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import Seo from '@/components/Seo';
+import MarketPulse from '@/components/MarketPulse';
 
 const Index = () => {
   const { user, role } = useAuth();
@@ -90,6 +91,8 @@ const Index = () => {
       </header>
 
       <RecommendedProducts />
+
+      <MarketPulse />
 
       <main className="px-2 pt-4">
         {loading ? (
