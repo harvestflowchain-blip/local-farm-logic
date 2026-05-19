@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Loader2, Users, Megaphone, BarChart3, Shield, Trash2, ArrowLeft, ListTodo, ShoppingBasket, Sprout } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { Tables } from '@/integrations/supabase/types';
+import PlatformTerminal from '@/components/admin/PlatformTerminal';
 
 interface UserRow {
   user_id: string;
