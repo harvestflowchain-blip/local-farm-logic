@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Loader2, Users, Megaphone, BarChart3, Shield, Trash2, ArrowLeft, ListTodo, ShoppingBasket, Sprout } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { Tables } from '@/integrations/supabase/types';
+import PlatformTerminal from '@/components/admin/PlatformTerminal';
 
 interface UserRow {
   user_id: string;
@@ -57,6 +58,7 @@ const AdminDashboard = () => {
   const [newTarget, setNewTarget] = useState('all');
   const [publishing, setPublishing] = useState(false);
   const [stats, setStats] = useState({ users: 0, farmers: 0, customers: 0, products: 0, orders: 0, harvestEntries: 0 });
+  const [tab, setTab] = useState('monitoring');
 
   const [requests, setRequests] = useState<FeatureRequest[]>([]);
   const [requestsLoading, setRequestsLoading] = useState(true);
@@ -232,7 +234,7 @@ const AdminDashboard = () => {
       </header>
 
       <main className="px-4 pt-4">
-        <Tabs defaultValue="monitoring">
+        <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="w-full grid grid-cols-6">
             <TabsTrigger value="monitoring" className="text-xs"><BarChart3 className="h-3.5 w-3.5 mr-1" />Stats</TabsTrigger>
             <TabsTrigger value="users" className="text-xs"><Users className="h-3.5 w-3.5 mr-1" />Users</TabsTrigger>
@@ -242,24 +244,15 @@ const AdminDashboard = () => {
             <TabsTrigger value="requests" className="text-xs"><ListTodo className="h-3.5 w-3.5 mr-1" />Requests</TabsTrigger>
           </TabsList>
 
-          {/* Stats */}
-          <TabsContent value="monitoring" className="pt-4 space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'Total Users', value: stats.users },
-                { label: 'Farmers', value: stats.farmers },
-                { label: 'Customers', value: stats.customers },
-                { label: 'Products', value: stats.products },
-                { label: 'Orders', value: stats.orders },
-                { label: 'Harvest Entries', value: stats.harvestEntries },
-              ].map((s) => (
-                <Card key={s.label} className="p-4 space-y-1">
-                  <p className="text-xs text-muted-foreground uppercase tracking-widest">{s.label}</p>
-                  <p className="text-2xl font-bold">{s.value}</p>
-                </Card>
-              ))}
-            </div>
+          {/* Stats — Platform Intelligence Terminal */}
+          <TabsContent value="monitoring" className="pt-4">
+            <PlatformTerminal
+              active={tab === 'monitoring'}
+              profileMap={profileMap}
+              onNavigateUsers={() => setTab('users')}
+            />
           </TabsContent>
+
 
           {/* Users */}
           <TabsContent value="users" className="pt-4 space-y-3">
