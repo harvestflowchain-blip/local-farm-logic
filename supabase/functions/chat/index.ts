@@ -29,23 +29,29 @@ serve(async (req) => {
       });
     }
 
-    const { messages } = await req.json();
+    const { messages: rawMessages } = await req.json();
 
     // Input limits to cap AI spend per request
-    if (!Array.isArray(messages) || messages.length === 0) {
+    if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
       return new Response(JSON.stringify({ error: "messages must be a non-empty array" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (messages.length > 30) {
+    if (rawMessages.length > 30) {
       return new Response(JSON.stringify({ error: "Too many messages" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const totalChars = messages.reduce(
-      (n: number, m: { content?: unknown }) => n + (typeof m?.content === "string" ? m.content.length : 0),
-      0,
-    );
+    // Sanitize: only allow user/assistant roles to prevent system-prompt injection
+    const messages = rawMessages
+      .filter((m: any) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+      .map((m: any) => ({ role: m.role, content: String(m.content).slice(0, 4000) }));
+    if (messages.length === 0) {
+      return new Response(JSON.stringify({ error: "No valid messages" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const totalChars = messages.reduce((n: number, m: { content: string }) => n + m.content.length, 0);
     if (totalChars > 12000) {
       return new Response(JSON.stringify({ error: "Message payload too large" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -66,16 +72,6 @@ serve(async (req) => {
       .select("id, name, category, price, description, stock_quantity")
       .eq("is_active", true);
 
-    // Fetch recent orders count
-    const { count: orderCount } = await adminClient
-      .from("orders")
-      .select("*", { count: "exact", head: true });
-
-    // Fetch stats
-    const { count: userCount } = await adminClient
-      .from("profiles")
-      .select("*", { count: "exact", head: true });
-
     const catalog = (products || [])
       .map(p => `- ${p.name} (${p.category || "uncategorized"}) — R${p.price}, stock: ${p.stock_quantity}${p.description ? ": " + p.description : ""}`)
       .join("\n");
@@ -92,10 +88,7 @@ Your role:
 - IMPORTANT: Only answer based on the data provided below. Do NOT hallucinate or make up data.
 - If you don't have data to answer a question, say: "I don't have fresh data on that right now. Last updated: ${lastUpdated}"
 
-Platform stats (last updated: ${lastUpdated}):
-- Total users: ${userCount || 0}
-- Total orders: ${orderCount || 0}
-- Active products: ${(products || []).length}
+Active products: ${(products || []).length}
 
 Current product catalog:
 ${catalog || "No products currently listed."}
