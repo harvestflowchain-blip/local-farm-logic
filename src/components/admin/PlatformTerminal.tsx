@@ -44,23 +44,49 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
   const [harvest, setHarvest] = useState<Harvest[]>([]);
   const [farmerSort, setFarmerSort] = useState<'gmv' | 'fulfilment' | 'last'>('gmv');
   const [expandAnomalies, setExpandAnomalies] = useState(false);
+  const [weeklyGmv, setWeeklyGmv] = useState<{ week: number; gmv: number; order_count: number; ts: number }[]>([]);
+  const [cohorts, setCohorts] = useState({ newB: 0, returning: 0, atRisk: 0, rate: 0 });
 
   useEffect(() => {
     if (!active || loaded || loading) return;
     (async () => {
       setLoading(true);
-      const [ordersRes, productsRes, rolesRes, profilesRes, harvestRes] = await Promise.all([
+      const [ordersRes, productsRes, rolesRes, profilesRes, harvestRes, gmvRes, cohortsRes] = await Promise.all([
         supabase.from('orders').select('id, total, status, created_at, updated_at, farmer_id, customer_id, delivery_suburb'),
         supabase.from('products').select('id, name, price, category, farmer_id, is_active, updated_at, stock_quantity'),
         supabase.from('user_roles').select('user_id').eq('role', 'farmer'),
         supabase.from('profiles').select('user_id, suburb'),
         supabase.from('harvest_entries').select('crop_name, farmer_id, estimated_ready_date, projected_yield_kg').gte('estimated_ready_date', new Date().toISOString().slice(0, 10)),
+        (supabase as any).rpc('admin_weekly_gmv'),
+        (supabase as any).rpc('admin_buyer_cohorts'),
       ]);
       setOrders((ordersRes.data as any) || []);
       setProducts((productsRes.data as any) || []);
       setFarmerRoles((rolesRes.data as any) || []);
       setFarmerProfiles((profilesRes.data as any) || []);
       setHarvest((harvestRes.data as any) || []);
+      const gmvRows = (gmvRes.data as any[]) || [];
+      // RPC returns DESC; reverse to oldest-first for the chart
+      setWeeklyGmv(
+        gmvRows
+          .slice()
+          .reverse()
+          .map((r: any) => ({
+            week: Number(r.week_index),
+            gmv: Number(r.gmv) || 0,
+            order_count: Number(r.order_count) || 0,
+            ts: new Date(r.week_start).getTime(),
+          }))
+      );
+      const c = (cohortsRes.data as any[])?.[0];
+      if (c) {
+        setCohorts({
+          newB: Number(c.new_this_week) || 0,
+          returning: Number(c.returning_this_week) || 0,
+          atRisk: Number(c.at_risk) || 0,
+          rate: Number(c.retention_rate) || 0,
+        });
+      }
       setLoaded(true);
       setLoading(false);
     })();
