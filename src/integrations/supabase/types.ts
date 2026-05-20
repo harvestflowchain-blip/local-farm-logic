@@ -458,6 +458,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_buyer_cohorts: {
+        Args: never
+        Returns: {
+          at_risk: number
+          new_this_week: number
+          retention_rate: number
+          returning_this_week: number
+        }[]
+      }
+      admin_weekly_gmv: {
+        Args: never
+        Returns: {
+          gmv: number
+          order_count: number
+          week_index: number
+          week_start: string
+        }[]
+      }
       get_farmer_customers: {
         Args: { _farmer_id: string }
         Returns: {

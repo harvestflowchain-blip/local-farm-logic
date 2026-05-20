@@ -44,23 +44,49 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
   const [harvest, setHarvest] = useState<Harvest[]>([]);
   const [farmerSort, setFarmerSort] = useState<'gmv' | 'fulfilment' | 'last'>('gmv');
   const [expandAnomalies, setExpandAnomalies] = useState(false);
+  const [weeklyGmv, setWeeklyGmv] = useState<{ week: number; gmv: number; order_count: number; ts: number }[]>([]);
+  const [cohorts, setCohorts] = useState({ newB: 0, returning: 0, atRisk: 0, rate: 0 });
 
   useEffect(() => {
     if (!active || loaded || loading) return;
     (async () => {
       setLoading(true);
-      const [ordersRes, productsRes, rolesRes, profilesRes, harvestRes] = await Promise.all([
+      const [ordersRes, productsRes, rolesRes, profilesRes, harvestRes, gmvRes, cohortsRes] = await Promise.all([
         supabase.from('orders').select('id, total, status, created_at, updated_at, farmer_id, customer_id, delivery_suburb'),
         supabase.from('products').select('id, name, price, category, farmer_id, is_active, updated_at, stock_quantity'),
         supabase.from('user_roles').select('user_id').eq('role', 'farmer'),
         supabase.from('profiles').select('user_id, suburb'),
         supabase.from('harvest_entries').select('crop_name, farmer_id, estimated_ready_date, projected_yield_kg').gte('estimated_ready_date', new Date().toISOString().slice(0, 10)),
+        (supabase as any).rpc('admin_weekly_gmv'),
+        (supabase as any).rpc('admin_buyer_cohorts'),
       ]);
       setOrders((ordersRes.data as any) || []);
       setProducts((productsRes.data as any) || []);
       setFarmerRoles((rolesRes.data as any) || []);
       setFarmerProfiles((profilesRes.data as any) || []);
       setHarvest((harvestRes.data as any) || []);
+      const gmvRows = (gmvRes.data as any[]) || [];
+      // RPC returns DESC; reverse to oldest-first for the chart
+      setWeeklyGmv(
+        gmvRows
+          .slice()
+          .reverse()
+          .map((r: any) => ({
+            week: Number(r.week_index),
+            gmv: Number(r.gmv) || 0,
+            order_count: Number(r.order_count) || 0,
+            ts: new Date(r.week_start).getTime(),
+          }))
+      );
+      const c = (cohortsRes.data as any[])?.[0];
+      if (c) {
+        setCohorts({
+          newB: Number(c.new_this_week) || 0,
+          returning: Number(c.returning_this_week) || 0,
+          atRisk: Number(c.at_risk) || 0,
+          rate: Number(c.retention_rate) || 0,
+        });
+      }
       setLoaded(true);
       setLoading(false);
     })();
@@ -152,46 +178,11 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
   const activeProductCount = products.filter(p => p.is_active).length;
   const tickerText = `TODAY ${fmtR(todayGmv)} · 7-DAY ${fmtR(weekGmv)} · ${orders.length} ORDERS · ${activeFarmerCount} ACTIVE FARMERS · ${activeProductCount} LIVE LISTINGS`;
 
-  // Weekly GMV chart
-  const weeklyGmv = useMemo(() => {
-    const buckets: { week: number; gmv: number; order_count: number; ts: number }[] = [];
-    for (let i = 7; i >= 0; i--) {
-      const start = now - (i + 1) * 7 * 86400000;
-      const end = now - i * 7 * 86400000;
-      const wk = orders.filter(o => {
-        const t = new Date(o.created_at).getTime();
-        return t >= start && t < end && o.status !== 'cancelled';
-      });
-      buckets.push({ week: 7 - i, gmv: wk.reduce((s, o) => s + Number(o.total), 0), order_count: wk.length, ts: end });
-    }
-    return buckets;
-  }, [orders]);
+  // Weekly GMV chart + cohorts now come from server-side RPCs (see useEffect above)
   const total8wk = weeklyGmv.reduce((s, w) => s + w.gmv, 0);
   const wow = weeklyGmv.length >= 2 && weeklyGmv[weeklyGmv.length - 2].gmv > 0
     ? ((weeklyGmv[weeklyGmv.length - 1].gmv - weeklyGmv[weeklyGmv.length - 2].gmv) / weeklyGmv[weeklyGmv.length - 2].gmv) * 100
     : 0;
-
-  // Cohorts
-  const cohorts = useMemo(() => {
-    const byCust = new Map<string, { first: number; last: number; total: number }>();
-    orders.filter(o => o.status !== 'cancelled').forEach(o => {
-      const t = new Date(o.created_at).getTime();
-      const cur = byCust.get(o.customer_id) || { first: t, last: t, total: 0 };
-      cur.first = Math.min(cur.first, t);
-      cur.last = Math.max(cur.last, t);
-      cur.total += 1;
-      byCust.set(o.customer_id, cur);
-    });
-    let newB = 0, returning = 0, atRisk = 0;
-    byCust.forEach(v => {
-      if (v.first >= wkAgo) newB++;
-      if (v.total > 1 && v.last >= wkAgo) returning++;
-      if (v.total >= 2 && now - v.last > 21 * 86400000) atRisk++;
-    });
-    const denom = returning + newB;
-    const rate = denom > 0 ? (returning / denom) * 100 : 0;
-    return { newB, returning, atRisk, rate };
-  }, [orders]);
 
   // Farmer health
   const farmerHealth = useMemo(() => {
