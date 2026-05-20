@@ -72,16 +72,6 @@ serve(async (req) => {
       .select("id, name, category, price, description, stock_quantity")
       .eq("is_active", true);
 
-    // Fetch recent orders count
-    const { count: orderCount } = await adminClient
-      .from("orders")
-      .select("*", { count: "exact", head: true });
-
-    // Fetch stats
-    const { count: userCount } = await adminClient
-      .from("profiles")
-      .select("*", { count: "exact", head: true });
-
     const catalog = (products || [])
       .map(p => `- ${p.name} (${p.category || "uncategorized"}) — R${p.price}, stock: ${p.stock_quantity}${p.description ? ": " + p.description : ""}`)
       .join("\n");
@@ -98,10 +88,7 @@ Your role:
 - IMPORTANT: Only answer based on the data provided below. Do NOT hallucinate or make up data.
 - If you don't have data to answer a question, say: "I don't have fresh data on that right now. Last updated: ${lastUpdated}"
 
-Platform stats (last updated: ${lastUpdated}):
-- Total users: ${userCount || 0}
-- Total orders: ${orderCount || 0}
-- Active products: ${(products || []).length}
+Active products: ${(products || []).length}
 
 Current product catalog:
 ${catalog || "No products currently listed."}
