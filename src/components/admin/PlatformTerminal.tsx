@@ -178,46 +178,11 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
   const activeProductCount = products.filter(p => p.is_active).length;
   const tickerText = `TODAY ${fmtR(todayGmv)} · 7-DAY ${fmtR(weekGmv)} · ${orders.length} ORDERS · ${activeFarmerCount} ACTIVE FARMERS · ${activeProductCount} LIVE LISTINGS`;
 
-  // Weekly GMV chart
-  const weeklyGmv = useMemo(() => {
-    const buckets: { week: number; gmv: number; order_count: number; ts: number }[] = [];
-    for (let i = 7; i >= 0; i--) {
-      const start = now - (i + 1) * 7 * 86400000;
-      const end = now - i * 7 * 86400000;
-      const wk = orders.filter(o => {
-        const t = new Date(o.created_at).getTime();
-        return t >= start && t < end && o.status !== 'cancelled';
-      });
-      buckets.push({ week: 7 - i, gmv: wk.reduce((s, o) => s + Number(o.total), 0), order_count: wk.length, ts: end });
-    }
-    return buckets;
-  }, [orders]);
+  // Weekly GMV chart + cohorts now come from server-side RPCs (see useEffect above)
   const total8wk = weeklyGmv.reduce((s, w) => s + w.gmv, 0);
   const wow = weeklyGmv.length >= 2 && weeklyGmv[weeklyGmv.length - 2].gmv > 0
     ? ((weeklyGmv[weeklyGmv.length - 1].gmv - weeklyGmv[weeklyGmv.length - 2].gmv) / weeklyGmv[weeklyGmv.length - 2].gmv) * 100
     : 0;
-
-  // Cohorts
-  const cohorts = useMemo(() => {
-    const byCust = new Map<string, { first: number; last: number; total: number }>();
-    orders.filter(o => o.status !== 'cancelled').forEach(o => {
-      const t = new Date(o.created_at).getTime();
-      const cur = byCust.get(o.customer_id) || { first: t, last: t, total: 0 };
-      cur.first = Math.min(cur.first, t);
-      cur.last = Math.max(cur.last, t);
-      cur.total += 1;
-      byCust.set(o.customer_id, cur);
-    });
-    let newB = 0, returning = 0, atRisk = 0;
-    byCust.forEach(v => {
-      if (v.first >= wkAgo) newB++;
-      if (v.total > 1 && v.last >= wkAgo) returning++;
-      if (v.total >= 2 && now - v.last > 21 * 86400000) atRisk++;
-    });
-    const denom = returning + newB;
-    const rate = denom > 0 ? (returning / denom) * 100 : 0;
-    return { newB, returning, atRisk, rate };
-  }, [orders]);
 
   // Farmer health
   const farmerHealth = useMemo(() => {
