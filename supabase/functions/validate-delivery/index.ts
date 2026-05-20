@@ -25,9 +25,28 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Require authentication to prevent cache poisoning and Nominatim abuse
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ valid: false, error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: authData, error: authErr } = await userClient.auth.getUser();
+    if (authErr || !authData?.user) {
+      return new Response(JSON.stringify({ valid: false, error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { suburb, farmerSuburb } = await req.json();
-    if (!suburb) {
-      return new Response(JSON.stringify({ valid: false, error: "Missing suburb" }), {
+    if (!suburb || typeof suburb !== "string" || suburb.length > 100) {
+      return new Response(JSON.stringify({ valid: false, error: "Invalid suburb" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
