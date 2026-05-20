@@ -29,23 +29,29 @@ serve(async (req) => {
       });
     }
 
-    const { messages } = await req.json();
+    const { messages: rawMessages } = await req.json();
 
     // Input limits to cap AI spend per request
-    if (!Array.isArray(messages) || messages.length === 0) {
+    if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
       return new Response(JSON.stringify({ error: "messages must be a non-empty array" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (messages.length > 30) {
+    if (rawMessages.length > 30) {
       return new Response(JSON.stringify({ error: "Too many messages" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const totalChars = messages.reduce(
-      (n: number, m: { content?: unknown }) => n + (typeof m?.content === "string" ? m.content.length : 0),
-      0,
-    );
+    // Sanitize: only allow user/assistant roles to prevent system-prompt injection
+    const messages = rawMessages
+      .filter((m: any) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+      .map((m: any) => ({ role: m.role, content: String(m.content).slice(0, 4000) }));
+    if (messages.length === 0) {
+      return new Response(JSON.stringify({ error: "No valid messages" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const totalChars = messages.reduce((n: number, m: { content: string }) => n + m.content.length, 0);
     if (totalChars > 12000) {
       return new Response(JSON.stringify({ error: "Message payload too large" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
