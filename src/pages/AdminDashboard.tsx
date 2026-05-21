@@ -58,7 +58,8 @@ const AdminDashboard = () => {
   const [newTarget, setNewTarget] = useState('all');
   const [publishing, setPublishing] = useState(false);
   const [stats, setStats] = useState({ users: 0, farmers: 0, customers: 0, products: 0, orders: 0, harvestEntries: 0 });
-  const [tab, setTab] = useState('monitoring');
+  const [tab, setTab] = useState('users');
+  const [monitoringActivated, setMonitoringActivated] = useState(false);
 
   const [requests, setRequests] = useState<FeatureRequest[]>([]);
   const [requestsLoading, setRequestsLoading] = useState(true);
@@ -234,7 +235,13 @@ const AdminDashboard = () => {
       </header>
 
       <main className="px-4 pt-4">
-        <Tabs value={tab} onValueChange={setTab}>
+        <Tabs
+          value={tab}
+          onValueChange={(v) => {
+            setTab(v);
+            if (v === 'monitoring') setMonitoringActivated(true);
+          }}
+        >
           <TabsList className="w-full grid grid-cols-6">
             <TabsTrigger value="monitoring" className="text-xs"><BarChart3 className="h-3.5 w-3.5 mr-1" />Stats</TabsTrigger>
             <TabsTrigger value="users" className="text-xs"><Users className="h-3.5 w-3.5 mr-1" />Users</TabsTrigger>
@@ -247,11 +254,12 @@ const AdminDashboard = () => {
           {/* Stats — Platform Intelligence Terminal */}
           <TabsContent value="monitoring" className="pt-4">
             <PlatformTerminal
-              active={tab === 'monitoring'}
+              active={tab === 'monitoring' && monitoringActivated}
               profileMap={profileMap}
               onNavigateUsers={() => setTab('users')}
             />
           </TabsContent>
+
 
 
           {/* Users */}
