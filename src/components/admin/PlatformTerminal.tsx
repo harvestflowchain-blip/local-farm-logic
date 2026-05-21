@@ -273,9 +273,9 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
   }, [harvest]);
 
   return (
-    <div className="rounded-lg bg-[hsl(0_0%_4%)] p-4 space-y-4 text-[hsl(0_0%_92%)]">
+    <div className="rounded-lg bg-background p-4 space-y-4 text-foreground">
       {/* Header */}
-      <Card className="p-4 space-y-3 bg-[hsl(0_0%_6%)] border-[hsl(0_0%_15%)]">
+      <Card className="p-4 space-y-3 bg-card border-border">
         <div className="flex items-center justify-between">
           <span className="text-xs uppercase tracking-widest" style={{ color: GOLD }}>Platform Status</span>
           {loading && !loaded ? (
@@ -297,7 +297,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
       </Card>
 
       {/* Anomaly Feed */}
-      <Card className="p-4 bg-[hsl(0_0%_6%)] border-[hsl(0_0%_15%)]">
+      <Card className="p-4 bg-card border-border">
         <SectionLabel>Anomaly Feed · Live</SectionLabel>
         {loading && !loaded ? (
           <Skeleton className="h-24 w-full" />
@@ -309,7 +309,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
         ) : (
           <div>
             {(expandAnomalies ? anomalies : anomalies.slice(0, 10)).map((a, i) => (
-              <div key={i} className="py-2 border-b border-[hsl(0_0%_12%)] flex items-start gap-2">
+              <div key={i} className="py-2 border-b border-border flex items-start gap-2">
                 <span className="h-2 w-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: a.color }} />
                 <span className="text-sm flex-1">{a.text}</span>
                 {a.ctx && <span className="text-xs text-muted-foreground">{a.ctx}</span>}
@@ -326,7 +326,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
 
       {/* GMV + Cohorts */}
       <div className="grid md:grid-cols-2 gap-4">
-        <Card className="p-4 bg-[hsl(0_0%_6%)] border-[hsl(0_0%_15%)]">
+        <Card className="p-4 bg-card border-border">
           <div className="flex items-center justify-between mb-1">
             <SectionLabel>GMV · 8 Weeks</SectionLabel>
             <span className="text-sm font-bold">{fmtR(total8wk)}</span>
@@ -339,7 +339,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={weeklyGmv}>
                     <Tooltip
-                      contentStyle={{ fontSize: 11, padding: 4, background: 'hsl(0 0% 10%)', border: '1px solid hsl(0 0% 20%)' }}
+                      contentStyle={{ fontSize: 11, padding: 4, background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
                       formatter={(v: any, name: any) => name === 'gmv' ? [fmtR(Number(v)), 'GMV'] : [v, 'Orders']}
                     />
                     <Bar dataKey="gmv" fill={GOLD} fillOpacity={0.6} />
@@ -354,7 +354,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
           )}
         </Card>
 
-        <Card className="p-4 bg-[hsl(0_0%_6%)] border-[hsl(0_0%_15%)]">
+        <Card className="p-4 bg-card border-border">
           <SectionLabel>Buyer Cohorts · Platform</SectionLabel>
           {loading && !loaded ? (
             <Skeleton className="h-24 w-full" />
@@ -365,7 +365,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
                 { label: 'RETURNING', value: cohorts.returning, color: GREEN },
                 { label: 'AT RISK (21d gap)', value: cohorts.atRisk, color: GOLD },
               ].map(r => (
-                <div key={r.label} className="flex justify-between text-sm py-1.5 border-b border-[hsl(0_0%_12%)]">
+                <div key={r.label} className="flex justify-between text-sm py-1.5 border-b border-border">
                   <span className="text-muted-foreground flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: r.color }} />
                     {r.label}
@@ -385,7 +385,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
       </div>
 
       {/* Farmer Health */}
-      <Card className="p-4 bg-[hsl(0_0%_6%)] border-[hsl(0_0%_15%)]">
+      <Card className="p-4 bg-card border-border">
         <div className="flex items-center justify-between">
           <SectionLabel>Farmer Health · This Month</SectionLabel>
           <button
@@ -426,7 +426,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
                       ? { color: GOLD, label: 'Slow' }
                       : { color: GREEN, label: 'Active' };
                     return (
-                      <tr key={f.id} className="border-b border-[hsl(0_0%_12%)]">
+                      <tr key={f.id} className="border-b border-border">
                         <td className="py-1.5 pr-2 font-medium">{f.name}</td>
                         <td className="py-1.5 pr-2" style={f.listings === 0 ? { color: RED } : undefined}>{f.listings}</td>
                         <td className="py-1.5 pr-2">{f.orders}</td>
@@ -460,7 +460,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
 
       {/* Concentration + Suburb gap */}
       <div className="grid md:grid-cols-2 gap-4">
-        <Card className="p-4 bg-[hsl(0_0%_6%)] border-[hsl(0_0%_15%)]">
+        <Card className="p-4 bg-card border-border">
           <SectionLabel>Supply Concentration · By Category</SectionLabel>
           {loading && !loaded ? (
             <Skeleton className="h-32 w-full" />
@@ -472,7 +472,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
                 : c.seller_count === 2 ? { color: GOLD, label: 'CONCENTRATED' }
                 : { color: GREEN, label: 'COMPETITIVE' };
               return (
-                <div key={c.category} className="flex items-center justify-between py-1.5 border-b border-[hsl(0_0%_12%)] text-sm">
+                <div key={c.category} className="flex items-center justify-between py-1.5 border-b border-border text-sm">
                   <span className="font-medium">{c.category}</span>
                   <span className="text-xs text-muted-foreground">{c.listing_count} listings · {c.seller_count} sellers</span>
                   <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: b.color.replace(')', ' / 0.15)'), color: b.color }}>
@@ -484,7 +484,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
           )}
         </Card>
 
-        <Card className="p-4 bg-[hsl(0_0%_6%)] border-[hsl(0_0%_15%)]">
+        <Card className="p-4 bg-card border-border">
           <SectionLabel>Suburb Demand Gap · 30 Days</SectionLabel>
           {loading && !loaded ? (
             <Skeleton className="h-32 w-full" />
@@ -496,7 +496,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
                 : s.gap >= 5 ? { color: GOLD, label: 'TIGHT' }
                 : { color: GREEN, label: 'BALANCED' };
               return (
-                <div key={s.suburb} className="flex items-center justify-between py-1.5 border-b border-[hsl(0_0%_12%)] text-sm">
+                <div key={s.suburb} className="flex items-center justify-between py-1.5 border-b border-border text-sm">
                   <span className="font-medium">{s.suburb}</span>
                   <span className="text-xs text-muted-foreground">{s.order_count} orders · {s.farmer_count} farmers</span>
                   <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: b.color.replace(')', ' / 0.15)'), color: b.color }}>
@@ -510,7 +510,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
       </div>
 
       {/* Harvest Pipeline */}
-      <Card className="p-4 bg-[hsl(0_0%_6%)] border-[hsl(0_0%_15%)]">
+      <Card className="p-4 bg-card border-border">
         <SectionLabel>Harvest Pipeline · Next 30 Days</SectionLabel>
         {loading && !loaded ? (
           <Skeleton className="h-32 w-full" />
@@ -525,7 +525,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
                     <p className="text-xs text-muted-foreground italic">Nothing scheduled</p>
                   ) : (
                     w.entries.map((e, i) => (
-                      <div key={i} className="p-2 rounded border border-[hsl(0_0%_15%)] bg-[hsl(0_0%_8%)] mb-1">
+                      <div key={i} className="p-2 rounded border border-border bg-muted mb-1">
                         <div className="text-xs font-medium">{e.crop_name}</div>
                         <div className="text-xs text-muted-foreground">{Number(e.projected_yield_kg)}kg</div>
                         <div className="text-xs text-muted-foreground truncate">{profileMap[e.farmer_id] || e.farmer_id.slice(0, 8)}</div>
