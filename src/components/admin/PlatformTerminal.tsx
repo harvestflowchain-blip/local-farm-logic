@@ -339,7 +339,7 @@ export default function PlatformTerminal({ active, profileMap, onNavigateUsers }
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={weeklyGmv}>
                     <Tooltip
-                      contentStyle={{ fontSize: 11, padding: 4, background: 'hsl(0 0% 10%)', border: '1px solid hsl(0 0% 20%)' }}
+                      contentStyle={{ fontSize: 11, padding: 4, background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
                       formatter={(v: any, name: any) => name === 'gmv' ? [fmtR(Number(v)), 'GMV'] : [v, 'Orders']}
                     />
                     <Bar dataKey="gmv" fill={GOLD} fillOpacity={0.6} />
