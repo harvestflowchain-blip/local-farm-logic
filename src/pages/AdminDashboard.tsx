@@ -235,7 +235,13 @@ const AdminDashboard = () => {
       </header>
 
       <main className="px-4 pt-4">
-        <Tabs value={tab} onValueChange={setTab}>
+        <Tabs
+          value={tab}
+          onValueChange={(v) => {
+            setTab(v);
+            if (v === 'monitoring') setMonitoringActivated(true);
+          }}
+        >
           <TabsList className="w-full grid grid-cols-6">
             <TabsTrigger value="monitoring" className="text-xs"><BarChart3 className="h-3.5 w-3.5 mr-1" />Stats</TabsTrigger>
             <TabsTrigger value="users" className="text-xs"><Users className="h-3.5 w-3.5 mr-1" />Users</TabsTrigger>
@@ -248,11 +254,12 @@ const AdminDashboard = () => {
           {/* Stats — Platform Intelligence Terminal */}
           <TabsContent value="monitoring" className="pt-4">
             <PlatformTerminal
-              active={tab === 'monitoring'}
+              active={tab === 'monitoring' && monitoringActivated}
               profileMap={profileMap}
               onNavigateUsers={() => setTab('users')}
             />
           </TabsContent>
+
 
 
           {/* Users */}
