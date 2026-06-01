@@ -14,21 +14,22 @@ const RecommendedProducts = () => {
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
-    if (!user) { setHidden(true); setLoading(false); return; }
-
     const fetchRecommendations = async () => {
       try {
-        const session = await supabase.auth.getSession();
-        const token = session.data.session?.access_token;
-        if (!token) { setHidden(true); setLoading(false); return; }
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        };
+
+        if (user) {
+          const session = await supabase.auth.getSession();
+          const token = session.data.session?.access_token;
+          if (token) headers.Authorization = `Bearer ${token}`;
+        }
 
         const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recommend-products`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
+          headers,
         });
 
         if (!resp.ok) { setHidden(true); setLoading(false); return; }
@@ -39,7 +40,6 @@ const RecommendedProducts = () => {
 
         setReasons(data.reasons || []);
 
-        // Fetch full product data
         const { data: prods } = await supabase
           .from('products')
           .select('*')
@@ -48,7 +48,6 @@ const RecommendedProducts = () => {
 
         if (!prods || prods.length === 0) { setHidden(true); setLoading(false); return; }
 
-        // Maintain order from AI
         const ordered = ids.map(id => prods.find(p => p.id === id)).filter(Boolean) as Tables<'products'>[];
         setProducts(ordered);
       } catch {
