@@ -81,7 +81,7 @@ const Cart = () => {
               <div key={item.id} className="flex gap-3 border-b pb-4">
                 <div className="h-20 w-16 bg-secondary shrink-0 overflow-hidden">
                   {item.products.image_url && (
-                    <img src={item.products.image_url} alt={item.products.name} className="h-full w-full object-cover" loading="lazy" />
+                    <img src={item.products.image_url} alt={item.products.name} width={96} height={96} className="h-full w-full object-cover" loading="lazy" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0 space-y-1">
