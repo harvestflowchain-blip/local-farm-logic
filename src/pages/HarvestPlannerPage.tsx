@@ -373,7 +373,7 @@ const HarvestPlannerPage = () => {
                           {entry.harvest_date ? format(parseISO(entry.harvest_date), 'dd MMM yyyy') : entry.estimated_ready_date ? format(parseISO(entry.estimated_ready_date), 'dd MMM yyyy') : '—'}
                         </p>
                         <p className="text-xs text-muted-foreground">{entry.projected_yield_kg} kg projected</p>
-                        {entry.notes && <p className="text-xs text-muted-foreground/70 mt-1">{entry.notes}</p>}
+                        {entry.notes && <p className="text-xs text-muted-foreground mt-1">{entry.notes}</p>}
                       </div>
                       <div className="flex gap-1 shrink-0">
                         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEdit(entry)}>
