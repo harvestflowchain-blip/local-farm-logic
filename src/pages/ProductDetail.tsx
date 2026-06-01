@@ -84,7 +84,7 @@ const ProductDetail = () => {
 
       <div className="aspect-[3/4] bg-secondary w-full">
         {product.image_url ? (
-          <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+          <img src={product.image_url} alt={product.name} width={800} height={800} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground">No image</div>
         )}
