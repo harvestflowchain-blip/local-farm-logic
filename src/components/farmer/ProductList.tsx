@@ -61,7 +61,7 @@ const ProductList = () => {
             <Card key={p.id} className={`flex gap-3 p-3 ${!p.is_active ? 'opacity-50' : ''}`}>
               <div className="h-16 w-14 bg-secondary shrink-0 overflow-hidden">
                 {p.image_url ? (
-                  <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" />
+                  <img src={p.image_url} alt={p.name} width={96} height={96} loading="lazy" className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full items-center justify-center text-xs text-muted-foreground">—</div>
                 )}
