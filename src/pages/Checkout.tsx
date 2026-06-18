@@ -220,26 +220,21 @@ const Checkout = () => {
         return;
       }
 
-      for (const group of farmerGroups) {
-        const total = group.subtotal + (group.delivery.fee ?? 0);
-        const { data: order, error: orderErr } = await supabase
-          .from('orders')
-          .insert({
-            customer_id: user.id, farmer_id: group.farmerId,
-            delivery_suburb: suburb, delivery_address: address || null,
-            delivery_fee: group.delivery.fee ?? 0, total,
-            payment_method: paymentMethod, status: 'placed',
-          })
-          .select('id').single();
-        if (orderErr) throw orderErr;
-        const orderItems = group.items.map((item) => {
-          const cartItem = items.find((ci) => ci.products.name === item.name && ci.products.farmer_id === group.farmerId)!;
-          return { order_id: order.id, product_id: cartItem.product_id, quantity: item.quantity, price_at_purchase: item.price };
-        });
-        const { error: itemsErr } = await supabase.from('order_items').insert(orderItems);
-        if (itemsErr) throw itemsErr;
-      }
-      await supabase.from('cart_items').delete().eq('user_id', user.id);
+      const groupsPayload = farmerGroups.map((g) => ({
+        farmer_id: g.farmerId,
+        delivery_fee: g.delivery.fee ?? 0,
+        items: g.items.map((it) => {
+          const ci = items.find((c) => c.products.name === it.name && c.products.farmer_id === g.farmerId)!;
+          return { product_id: ci.product_id, quantity: it.quantity, price_at_purchase: it.price };
+        }),
+      }));
+      const { error: rpcErr } = await supabase.rpc('place_orders_atomic', {
+        _delivery_suburb: suburb,
+        _delivery_address: address || '',
+        _payment_method: paymentMethod,
+        _groups: groupsPayload as any,
+      });
+      if (rpcErr) throw rpcErr;
       setPlaced(true);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });

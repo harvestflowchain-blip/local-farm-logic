@@ -62,7 +62,6 @@ const Orders = () => {
 
       if (!data) { setLoading(false); return; }
 
-      // Fetch farmer profiles
       const farmerIds = [...new Set(data.map((o) => o.farmer_id))];
       const { data: profiles } = await supabase
         .from('profiles')
@@ -83,6 +82,17 @@ const Orders = () => {
     };
 
     fetchOrders();
+
+    const channel = supabase
+      .channel(`orders-customer-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders', filter: `customer_id=eq.${user.id}` },
+        () => fetchOrders()
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [user]);
 
   if (!user) return null;
