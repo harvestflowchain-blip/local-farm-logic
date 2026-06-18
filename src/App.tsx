@@ -22,6 +22,9 @@ import Calendar from "./pages/Calendar";
 import AdminDashboard from "./pages/AdminDashboard";
 import HarvestPlannerPage from "./pages/HarvestPlannerPage";
 import AccessError from "./pages/AccessError";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import CookieConsent from "./components/CookieConsent";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -76,7 +79,14 @@ const AppRoutes = () => (
         </RoleGuard>
       } />
       <Route path="/settings" element={<Navigate to="/profile" replace />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
       <Route path="/admin" element={
+        <RoleGuard allowed={['admin']}>
+          <AdminDashboard />
+        </RoleGuard>
+      } />
+      <Route path="/console-9f3a" element={
         <RoleGuard allowed={['admin']}>
           <AdminDashboard />
         </RoleGuard>
@@ -100,6 +110,7 @@ const App = () => (
         <AuthProvider>
           <AppRoutes />
           <BottomNav />
+          <CookieConsent />
           <ChatBot />
         </AuthProvider>
       </BrowserRouter>
