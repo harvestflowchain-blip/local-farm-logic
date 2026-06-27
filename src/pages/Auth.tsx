@@ -9,6 +9,7 @@ import { HELDERBERG_SUBURBS } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 import Seo from '@/components/Seo';
+import { lovable } from '@/integrations/lovable';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
