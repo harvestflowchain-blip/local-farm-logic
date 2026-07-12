@@ -36,6 +36,8 @@ const ProductCard = ({ product, isOwner, onDelete }: ProductCardProps) => {
               <img
                 src={product.image_url}
                 alt={product.name}
+                width={400}
+                height={533}
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
               />
