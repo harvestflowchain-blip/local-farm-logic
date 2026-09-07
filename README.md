@@ -1,73 +1,56 @@
-# Welcome to your Lovable project
+# Harvest AI
 
-## Project info
+Phase 1: Foundation, Aesthetic & AI Core (Fine Art + Self-Learning Base)
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Prompt 1:
+"Build a mobile-first marketplace app called 'HarvestFlow Chain' using Supabase for backend auth, database, and basic AI extensions. Aesthetic: Fine Art Minimalist—clean white background, black sans-serif typography, edge-to-edge product cards in masonry grid like an art gallery, high-contrast black/white buttons.
+User Roles: Signup as 'Farmer' (Vendor) or 'Customer' (Buyer), with location fields.
+Database: 'Products' table (name, description, price_ZAR, stock_quantity, image_url, farmer_id). Display on home in grid.
+AI Core: Add a 'Learning Module' in Supabase to log user interactions (e.g., views, carts) anonymously. It self-teaches by analyzing patterns (e.g., popular products) to auto-suggest improvements like personalized recommendations on home page."
 
-## How can I edit this code?
+Phase 2: Logistics & AI-Optimized Delivery (R0-Protected Calc + Compounding Efficiency)
 
-There are several ways of editing your application.
+Prompt 2:
+"Add Cart/Checkout with distance-based delivery calc using Farmer/Customer locations. Fees: 0-5km = R35; 5-15km = R50; >15km = 'Unavailable'. Show Product Total, Delivery Fee, Grand Total.
+Enhance AI: Module now learns from completed orders (e.g., average distances) to compound improvements—auto-adjust fees quarterly based on data (e.g., if >50% orders >15km, suggest expanding zones in dashboard). Ensure margin of safety with min fee floor."
 
-**Use Lovable**
+Phase 3: Farmer Portal & AI Self-Improvement (Upload + Adaptive Orders)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+Prompt 3:
+"Add Farmer Dashboard (Farmer-role only): Product upload form (photo, price, desc); Order list (Customer name/address/items); Status toggle (Pending → Harvested → Ready).
+AI Upgrade: Module teaches itself from order data to improve app—e.g., predict stock shortages and alert farmers; auto-refine UI (suggest simpler forms if upload abandonment >20%). Display AI suggestions in dashboard for quick approval."
 
-Changes made via Lovable will be committed automatically to this repo.
+Phase 4: Uber Integration & AI-Enhanced Receipts (Deep Link + Smart Records)
 
-**Use your preferred IDE**
+Prompt 4:
+"Add Admin Logistics view: For paid orders, 'Book Courier' button deep-links to Uber/Maps with pre-filled Pickup (Farmer coords) and Drop-off (Customer coords). Generate printable PDF receipt.
+AI Evolution: Learning module analyzes logistics data to self-improve—e.g., optimize routes over time (batch similar drops); compound value by suggesting fee reductions for efficient paths, building long-term moat."
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Phase 5: Grant-Proof Analytics & Full AI Autonomy (Impact Dash + Continuous Growth)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Prompt 5:
+"Add Admin Analytics tab: Total Kg Moved (from descs); Graph of Farmer Payouts vs. Platform Revenue; Map pins for Farmers/Customers in Helderberg.
+AI Completion: Module now fully autonomous—teaches itself from all data to improve app holistically (e.g., A/B test UI changes, predict trends); auto-generates update prompts for Lovable.dev integration, ensuring exponential scaling with safety checks."
 
-Follow these steps:
+This project was built with [Lovable](https://lovable.dev).
+
+**Live app**: https://local-farm-logic.lovable.app
+
+## Build with Lovable
+
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/f249aaab-73c9-4708-a4b1-2aee56e67caf).
+
+- **Ship faster**: describe what you want to build and Lovable handles the code.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+
+## Development
+
+Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+git clone <this-repository-url>
+cd <repository-name>
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
